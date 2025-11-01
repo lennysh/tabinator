@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link Launcher</title>
     <!-- 1. Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,6 @@
     </style>
     
     <style type="text/tailwindcss">
-        /* NEW: Added button styles back */
         .btn {
             @apply px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ease-in-out;
         }
@@ -29,7 +28,6 @@
             @apply font-sans min-h-screen;
         }
         
-        /* Styles for the tag filter buttons */
         .tag-btn {
             @apply px-3 py-1 text-sm rounded-full cursor-pointer transition-all duration-150 ease-in-out;
         }
@@ -38,6 +36,10 @@
         }
         .tag-btn-active {
             @apply bg-blue-600 text-white font-medium ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900;
+        }
+        /* NEW: Style for tags that are filtered out */
+        .tag-btn-hidden {
+            @apply hidden;
         }
     </style>
 </head>
@@ -73,11 +75,6 @@
                 </div>
             </div>
             
-            <!-- 
-              ******************************************************************
-              * NEW: "Open All Filtered" Button
-              ******************************************************************
-            -->
             <div class="mt-6">
                 <button id="open-all-filtered-btn" class="btn btn-blue w-full">
                     Open All Filtered Links
@@ -86,11 +83,6 @@
 
         </header>
 
-        <!-- 
-          ******************************************************************
-          * NEW: Pop-up blocker warning is back
-          ******************************************************************
-        -->
         <div class="bg-yellow-800 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg mb-8" role="alert">
             <p class="font-bold">Heads up!</p>
             <p>Your browser's pop-up blocker will likely prevent the "Open All" button from working. Please **allow pop-ups** from this site (`http://localhost:8080`) for the feature to work correctly.</p>
@@ -122,7 +114,6 @@
     <script>
         // Store the parsed data globally
         let linkData = null;
-        // NEW: Store the currently visible links for the "Open All" button
         let currentlyFilteredLinks = [];
         
         // Store filter states globally
@@ -130,15 +121,15 @@
         let activeTags = new Set();
         let currentSort = 'custom';
         let currentQuery = '';
+        
+        // NEW: Store all tag buttons for efficient showing/hiding
+        let tagButtonElements = {};
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderLinks();
             
-            // NEW: Add click listener for the main "Open All" button
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
-            
-            const tagContainer = document.getElementById('tag-pills-container');
-            tagContainer.addEventListener('click', handleTagClick);
+            document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
         });
 
         /**
@@ -188,8 +179,8 @@
                     }
                 });
                 
-                // 4. Render tags
-                renderTagPills();
+                // 4. NEW: Create tag pill elements ONCE
+                createTagPills();
 
                 // 5. Render the application
                 renderApp(); 
@@ -211,12 +202,13 @@
         }
         
         /**
-         * Renders the tag filter buttons
+         * NEW: Creates all tag pill DOM elements one time on load
          */
-        function renderTagPills() {
+        function createTagPills() {
             const tagContainer = document.getElementById('tag-pills-container');
             const tagFilterContainer = document.getElementById('tag-filter-container');
             tagContainer.innerHTML = ''; // Clear old tags
+            tagButtonElements = {}; // Clear old elements
             
             if (allTags.size === 0) {
                 tagFilterContainer.classList.add('hidden');
@@ -229,13 +221,32 @@
             
             sortedTags.forEach(tag => {
                 const button = document.createElement('button');
-                const isActive = activeTags.has(tag);
-                button.className = `tag-btn ${isActive ? 'tag-btn-active' : 'tag-btn-inactive'}`;
                 button.textContent = tag;
                 button.setAttribute('data-tag', tag);
                 tagContainer.appendChild(button);
+                tagButtonElements[tag] = button; // Store reference
             });
         }
+        
+        /**
+         * NEW: Updates the visibility and state of tag pills based on filtered links
+         */
+        function updateTagPills(availableTags) {
+             for (const tag in tagButtonElements) {
+                const button = tagButtonElements[tag];
+                const isActive = activeTags.has(tag);
+                const isAvailable = availableTags.has(tag);
+
+                if (isActive) {
+                    button.className = 'tag-btn tag-btn-active';
+                } else if (isAvailable) {
+                    button.className = 'tag-btn tag-btn-inactive';
+                } else {
+                    button.className = 'tag-btn tag-btn-hidden';
+                }
+            }
+        }
+
 
         /**
          * Renders the link groups and cards based on current filters
@@ -247,34 +258,44 @@
             const noResultsEl = document.getElementById('no-results');
             appEl.innerHTML = ''; // Clear previous content
             
-            // 1. Filter links based on search AND tags
-            const matchingLinks = linkData.links.filter(link => {
-                const nameMatch = link.name.toLowerCase().includes(currentQuery);
-                const urlMatch = link.url.toLowerCase().includes(currentQuery);
-                
-                const searchMatch = (currentQuery === "") || nameMatch || urlMatch;
-                if (!searchMatch) return false;
-                
-                if (activeTags.size > 0) {
-                    if (!link.tags || !Array.isArray(link.tags)) {
-                        return false; 
-                    }
+            // 1. Filter by Search Query
+            let searchFilteredLinks = [...linkData.links];
+            if (currentQuery) {
+                searchFilteredLinks = searchFilteredLinks.filter(link => {
+                    const nameMatch = link.name.toLowerCase().includes(currentQuery);
+                    const urlMatch = link.url.toLowerCase().includes(currentQuery);
+                    return nameMatch || urlMatch;
+                });
+            }
+            
+            // 2. Filter by Active Tags
+            let finalFilteredLinks = [...searchFilteredLinks];
+            if (activeTags.size > 0) {
+                finalFilteredLinks = finalFilteredLinks.filter(link => {
+                    if (!link.tags || !Array.isArray(link.tags)) return false;
                     return Array.from(activeTags).every(activeTag => link.tags.includes(activeTag));
-                }
-                
-                return true;
+                });
+            }
+            
+            // 3. NEW: Calculate available tags based on the *final* filtered list
+            const availableTags = new Set();
+            finalFilteredLinks.forEach(link => {
+                link.tags?.forEach(tag => availableTags.add(tag));
             });
+            
+            // 4. NEW: Update the tag pill UI
+            updateTagPills(availableTags);
 
-            // 2. Sort the filtered links
-            let sortedLinks = [...matchingLinks];
+            // 5. Sort the filtered links
+            let sortedLinks = [...finalFilteredLinks];
             if (currentSort === 'az') {
                 sortedLinks.sort((a, b) => a.name.localeCompare(b.name));
             }
             
-            // 3. NEW: Store the filtered links for the "Open All" button
+            // 6. Store the filtered links for the "Open All" button
             currentlyFilteredLinks = sortedLinks;
             
-            // 4. Render the final list
+            // 7. Render the final list
             if (sortedLinks.length > 0) {
                 renderLinkList(sortedLinks);
                 noResultsEl.classList.add('hidden');
@@ -282,7 +303,7 @@
                 noResultsEl.classList.remove('hidden');
             }
             
-            // 5. NEW: Update the "Open All" button text
+            // 8. Update the "Open All" button text
             const openAllBtn = document.getElementById('open-all-filtered-btn');
             openAllBtn.textContent = `Open All Filtered Links (${currentlyFilteredLinks.length})`;
             openAllBtn.disabled = currentlyFilteredLinks.length === 0;
@@ -306,7 +327,9 @@
             const linksHtml = links.map(link => {
                 let tagsHtml = '';
                 if (link.tags && Array.isArray(link.tags)) {
-                    tagsHtml = link.tags.map(tag => 
+                    // NEW: Sort tags alphabetically before rendering
+                    const sortedLinkTags = [...link.tags].sort((a, b) => a.localeCompare(b));
+                    tagsHtml = sortedLinkTags.map(tag => 
                         `<span class="bg-gray-600 text-gray-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${tag}</span>`
                     ).join('');
                 }
@@ -367,10 +390,8 @@
             const tag = target.getAttribute('data-tag');
             if (activeTags.has(tag)) {
                 activeTags.delete(tag);
-                target.classList.replace('tag-btn-active', 'tag-btn-inactive');
             } else {
                 activeTags.add(tag);
-                target.classList.replace('tag-btn-inactive', 'tag-btn-active');
             }
             
             localStorage.setItem('linkLauncherTags', JSON.stringify(Array.from(activeTags)));
@@ -378,7 +399,7 @@
         }
 
         /**
-         * NEW: Handles click on the main "Open All Filtered" button
+         * Handles click on the main "Open All Filtered" button
          */
         function handleOpenAllFiltered() {
             if (currentlyFilteredLinks && currentlyFilteredLinks.length > 0) {
