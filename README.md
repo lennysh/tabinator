@@ -13,8 +13,8 @@ services:
       - "8080:80" # Access the app at http://localhost:8080
     volumes:
       # Mount the app files into the Nginx web root
-      - ./app/index.html:/usr/share/nginx/html/index.html
-      - ./app/links.yaml:/usr/share/nginx/html/links.yaml
+      - ./index.html:/usr/share/nginx/html/index.html
+      - ./links.yaml:/usr/share/nginx/html/links.yaml
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -26,8 +26,8 @@ Podman Run
 podman run -d \
   --name link_launcher \
   -p 8080:80 \
-  -v ./app/index.html:/usr/share/nginx/html/index.html:Z \
-  -v ./app/links.yaml:/usr/share/nginx/html/links.yaml:Z \
+  -v ./index.html:/usr/share/nginx/html/index.html:Z \
+  -v ./links.yaml:/usr/share/nginx/html/links.yaml:Z \
   --restart unless-stopped \
   --security-opt no-new-privileges \
   nginx:alpine

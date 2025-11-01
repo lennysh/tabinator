@@ -140,7 +140,7 @@
                 }
 
                 // 3. Render the application
-                renderApp(linkData.groups);
+                renderApp(linkData.groups, ""); // Pass an empty query initially
 
                 // 4. Update UI state
                 loadingEl.classList.add('hidden');
@@ -160,98 +160,114 @@
         /**
          * Renders the link groups and cards into the DOM
          * @param {Array} groups - The array of groups from the YAML file
+         * @param {string} query - The search query to filter by
          */
-        function renderApp(groups) {
+        function renderApp(groups, query = "") {
             const appEl = document.getElementById('app-container');
-            appEl.innerHTML = ''; // Clear any previous content
+            const noResultsEl = document.getElementById('no-results');
+            appEl.innerHTML = ''; // Clear previous content
+            let hasVisibleCards = false;
 
             if (groups.length === 0) {
                 appEl.innerHTML = `<p class="text-gray-400 col-span-2 text-center">No link groups found in 'links.yaml'.</p>`;
                 return;
             }
 
-            groups.forEach((group, groupIndex) => {
-                // Create the group card
-                const card = document.createElement('div');
-                
-                // NEW: Add a unique ID and a class for searching
-                card.id = `group-card-${groupIndex}`;
-                // The styling for the card itself is all inline, so it was never broken.
-                card.className = 'bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col link-group-card'; 
-                
-                let linksHtml = '';
-                if (group.links && group.links.length > 0) {
-                    linksHtml = group.links.map(link => `
-                        <li class="mb-2">
-                            <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
-                               class="text-blue-400 hover:text-blue-300 hover:underline truncate" 
-                               title="${link.url}">
-                                ${link.name}
-                            </a>
-                        </li>
-                    `).join('');
-                } else {
-                    linksHtml = '<li class="text-gray-500">No links in this group.</li>';
-                }
+            // A. If there is no query, render all groups with all links
+            if (query === "") {
+                groups.forEach((group, groupIndex) => {
+                    renderGroupCard(group, groupIndex, group.links);
+                });
+                hasVisibleCards = (groups.length > 0);
+            } 
+            // B. If there IS a query, filter based on the new logic
+            else {
+                groups.forEach((group, groupIndex) => {
+                    const titleMatch = group.title.toLowerCase().includes(query);
+                    
+                    if (titleMatch) {
+                        // 1. Title matches: render card with ALL links
+                        renderGroupCard(group, groupIndex, group.links);
+                        hasVisibleCards = true;
+                    } else {
+                        // 2. Title doesn't match, check links
+                        const matchingLinks = group.links.filter(link => 
+                            link.name.toLowerCase().includes(query) || 
+                            link.url.toLowerCase().includes(query)
+                        );
+                        
+                        if (matchingLinks.length > 0) {
+                            // 3. Links match: render card with ONLY matching links
+                            renderGroupCard(group, groupIndex, matchingLinks);
+                            hasVisibleCards = true;
+                        }
+                    }
+                    // 4. No match: do nothing, card is not rendered
+                });
+            }
 
-                card.innerHTML = `
-                    <div class="flex-grow">
-                        <h2 class="text-2xl font-bold text-white mb-4">${group.title}</h2>
-                        <ul class="list-disc list-inside space-y-1 mb-6">
-                            ${linksHtml}
-                        </ul>
-                    </div>
-                    <div class="mt-4">
-                        <!-- 
-                          This button's styling (btn, btn-blue) will now work 
-                          because the <style> tag has the correct type.
-                        -->
-                        <button class="btn btn-blue open-all-btn w-full" data-group-index="${groupIndex}">
-                            Open All Links in Group
-                        </button>
-                    </div>
-                `;
-                
-                appEl.appendChild(card);
-            });
+            // Show or hide the "No results" message
+            noResultsEl.classList.toggle('hidden', hasVisibleCards);
+        }
+        
+        /**
+         * NEW: Creates a single group card and appends it to the DOM
+         * @param {object} group - The group object
+         * @param {number} groupIndex - The original index (for the 'Open All' button)
+         * @param {Array} linksToShow - The specific array of links to render
+         */
+        function renderGroupCard(group, groupIndex, linksToShow) {
+            const appEl = document.getElementById('app-container');
+            
+            // Create the group card
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col link-group-card'; 
+            
+            let linksHtml = '';
+            if (linksToShow && linksToShow.length > 0) {
+                linksHtml = linksToShow.map(link => `
+                    <li class="mb-2">
+                        <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
+                           class="text-blue-400 hover:text-blue-300 hover:underline truncate" 
+                           title="${link.url}">
+                            ${link.name}
+                        </a>
+                    </li>
+                `).join('');
+            } else {
+                // This case should only happen if a group has no links
+                linksHtml = '<li class="text-gray-500">No links in this group.</li>';
+            }
+
+            card.innerHTML = `
+                <div class="flex-grow">
+                    <h2 class="text-2xl font-bold text-white mb-4">${group.title}</h2>
+                    <ul class="list-disc list-inside space-y-1 mb-6">
+                        ${linksHtml}
+                    </ul>
+                </div>
+                <div class="mt-4">
+                    <!-- 
+                      This button's styling (btn, btn-blue) will now work 
+                      because the <style> tag has the correct type.
+                    -->
+                    <button class="btn btn-blue open-all-btn w-full" data-group-index="${groupIndex}">
+                        Open All Links in Group
+                    </button>
+                </div>
+            `;
+            
+            appEl.appendChild(card);
         }
 
+
         /**
-         * NEW: Handles filtering the visible link groups based on search query
+         * NEW: Handles search input by re-rendering the app
          */
         function handleSearch(event) {
             const query = event.target.value.toLowerCase();
-            const noResultsEl = document.getElementById('no-results');
-            let hasVisibleCards = false;
-
-            if (!linkData || !linkData.groups) return;
-
-            linkData.groups.forEach((group, index) => {
-                const card = document.getElementById(`group-card-${index}`);
-                if (!card) return; // Safety check
-
-                // Check for match in title
-                const titleMatch = group.title.toLowerCase().includes(query);
-                
-                // Check for match in any link name or URL
-                const linkMatch = group.links.some(link => 
-                    link.name.toLowerCase().includes(query) || 
-                    link.url.toLowerCase().includes(query)
-                );
-
-                if (titleMatch || linkMatch) {
-                    card.classList.remove('hidden');
-                    hasVisibleCards = true;
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
-
-            // Show or hide the "No results" message
-            if (hasVisibleCards) {
-                noResultsEl.classList.add('hidden');
-            } else {
-                noResultsEl.classList.remove('hidden');
+            if (linkData && linkData.groups) {
+                renderApp(linkData.groups, query);
             }
         }
 
@@ -287,4 +303,3 @@
     </script>
 </body>
 </html>
-
