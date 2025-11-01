@@ -97,8 +97,13 @@
             <p>No results found.</p>
         </div>
 
-        <!-- App Content: This will be populated by JavaScript -->
-        <main id="app-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6"></main>
+        <!-- 
+          ******************************************************************
+          * UPDATED: Changed grid to single-column (grid-cols-1)
+          * and increased gap for a "list" feel instead of "cards".
+          ******************************************************************
+        -->
+        <main id="app-container" class="hidden grid grid-cols-1 gap-8"></main>
 
     </div>
 
@@ -221,40 +226,71 @@
             
             // Create the group card
             const card = document.createElement('div');
-            card.className = 'bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col link-group-card'; 
+            // MODIFIED: Removed padding from the card, will add to header
+            card.className = 'bg-gray-800 shadow-lg rounded-lg flex flex-col link-group-card overflow-hidden'; 
             
             let linksHtml = '';
             if (linksToShow && linksToShow.length > 0) {
+                
+                // NEW: Utility to get hostname for favicon
+                const getHostname = (url) => {
+                    try {
+                        return new URL(url).hostname;
+                    } catch (e) {
+                        return 'example.com'; // Fallback
+                    }
+                };
+                
+                // NEW: Use a simple div container for the list
                 linksHtml = linksToShow.map(link => `
-                    <li class="mb-2">
-                        <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
-                           class="text-blue-400 hover:text-blue-300 hover:underline truncate" 
-                           title="${link.url}">
-                            ${link.name}
-                        </a>
+                    <li class="flex items-center p-3 hover:bg-gray-700 transition-colors duration-150">
+                        <img 
+                            src="https://www.google.com/s2/favicons?domain=${getHostname(link.url)}&sz=32" 
+                            alt="favicon" 
+                            class="w-5 h-5 mr-3 rounded-sm"
+                            onerror="this.style.display='none'"
+                        >
+                        <div class="flex-1 truncate">
+                            <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
+                               class="text-blue-400 hover:text-blue-300 text-base" 
+                               title="${link.name}">
+                                ${link.name}
+                            </a>
+                            <p class="text-gray-400 text-xs truncate" title="${link.url}">
+                                ${link.url}
+                            </p>
+                        </div>
                     </li>
                 `).join('');
+                // NEW: Wrap in a <ul>
+                linksHtml = `<ul class="divide-y divide-gray-700">${linksHtml}</ul>`;
+
             } else {
                 // This case should only happen if a group has no links
-                linksHtml = '<li class="text-gray-500">No links in this group.</li>';
+                linksHtml = '<p class="text-gray-500 p-4">No links in this group.</p>';
             }
 
             card.innerHTML = `
                 <div class="flex-grow">
-                    <h2 class="text-2xl font-bold text-white mb-4">${group.title}</h2>
-                    <ul class="list-disc list-inside space-y-1 mb-6">
+                    <!-- NEW: Added padding to the header area -->
+                    <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                        <h2 class="text-2xl font-bold text-white">${group.title}</h2>
+                        <!-- NEW: Moved button to the header -->
+                        <button class="btn btn-blue open-all-btn flex-shrink-0" data-group-index="${groupIndex}">
+                            Open All
+                        </button>
+                    </div>
+                    
+                    <!-- This div will contain the link list -->
+                    <div class="space-y-1">
                         ${linksHtml}
-                    </ul>
+                    </div>
                 </div>
-                <div class="mt-4">
-                    <!-- 
-                      This button's styling (btn, btn-blue) will now work 
-                      because the <style> tag has the correct type.
-                    -->
-                    <button class="btn btn-blue open-all-btn w-full" data-group-index="${groupIndex}">
-                        Open All Links in Group
-                    </button>
-                </div>
+                <!-- 
+                  ******************************************************************
+                  * REMOVED: Button was moved to the header
+                  ******************************************************************
+                -->
             `;
             
             appEl.appendChild(card);
@@ -276,12 +312,11 @@
          * Handles clicks within the app container (event delegation)
          */
         function handleAppClick(event) {
-            const target = event.target;
+            // NEW: Updated to find the button anywhere in the card
+            const target = event.target.closest('.open-all-btn');
 
             // Check if an "Open All" button was clicked
-            if (target.classList.contains('open-all-btn')) {
-                // This logic remains unchanged, as it correctly references
-                // the original group index from the global linkData.
+            if (target) {
                 const groupIndex = target.getAttribute('data-group-index');
                 
                 if (linkData && linkData.groups[groupIndex]) {
@@ -303,3 +338,4 @@
     </script>
 </body>
 </html>
+
