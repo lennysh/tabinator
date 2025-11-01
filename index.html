@@ -9,12 +9,6 @@
     <!-- 2. js-yaml library to parse the YAML file -->
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     
-    <!-- 
-      ******************************************************************
-      * FIX: Added a plain CSS block for the dark mode background.
-      * This ensures the dark mode loads immediately and reliably.
-      ******************************************************************
-    -->
     <style>
         body {
             /* This is Tailwind's gray-900 and gray-100 */
@@ -23,12 +17,6 @@
         }
     </style>
     
-    <!-- 
-      ******************************************************************
-      * FIX: Added type="text/tailwindcss" to the style tag.
-      * This is required for the @apply directives to work.
-      ******************************************************************
-    -->
     <style type="text/tailwindcss">
         /* Simple transition for button hover */
         .btn {
@@ -40,16 +28,22 @@
         .btn-green {
             @apply bg-green-600 hover:bg-green-700 shadow-sm;
         }
-        /* This class will be applied by the body tag for Tailwind */
         body {
             @apply font-sans min-h-screen;
         }
+        
+        /* NEW: Styles for the tag filter buttons */
+        .tag-btn {
+            @apply px-3 py-1 text-sm rounded-full cursor-pointer transition-all duration-150 ease-in-out;
+        }
+        .tag-btn-inactive {
+            @apply bg-gray-700 text-gray-300 hover:bg-gray-600;
+        }
+        .tag-btn-active {
+            @apply bg-blue-600 text-white font-medium ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900;
+        }
     </style>
 </head>
-<!-- 
-  The classes here will be processed by the Tailwind CDN and override
-  the default styles above, ensuring fonts etc. are applied.
--->
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
     <div class="container max-w-4xl mx-auto p-4 md:p-8">
@@ -58,24 +52,45 @@
             <h1 class="text-4xl font-bold text-white mb-2">Link Launcher</h1>
             <p class="text-lg text-gray-400 mb-6">Your self-hosted link group dashboard.</p>
             
-            <!-- 
-              ******************************************************************
-              * NEW: Search Bar
-              ******************************************************************
-            -->
             <input
                 type="search"
                 id="search-bar"
                 placeholder="Search titles, names, or URLs..."
                 class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+
+            <div class="mt-4 sm:flex sm:space-x-4">
+                <div class="sm:w-1/2">
+                    <label for="group-sort-select" class="block text-sm font-medium text-gray-400">Sort groups by:</label>
+                    <select id="group-sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
+                        <option value="custom">Custom Order (default)</option>
+                        <option value="az">A-Z (by title)</option>
+                    </select>
+                </div>
+
+                <div class="sm:w-1/2 mt-4 sm:mt-0">
+                    <label for="sort-select" class="block text-sm font-medium text-gray-400">Sort links by:</label>
+                    <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
+                        <option value="custom">Custom Order (default)</option>
+                        <option value="az">A-Z (by name)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 
+              ******************************************************************
+              * NEW: Tag Filtering Section
+              ******************************************************************
+            -->
+            <div id="tag-filter-container" class="mt-6 hidden">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Filter by Tags:</label>
+                <div id="tag-pills-container" class="flex flex-wrap gap-2">
+                    <!-- Tag buttons will be dynamically inserted here -->
+                </div>
+            </div>
+
         </header>
 
-        <!-- 
-          ******************************************************************
-          * IMPORTANT: POP-UP BLOCKER WARNING
-          ******************************************************************
-        -->
         <div class="bg-yellow-800 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg mb-8" role="alert">
             <p class="font-bold">Heads up!</p>
             <p>Your browser's pop-up blocker will likely prevent the "Open All" buttons from working. Please **allow pop-ups** from this site (`http://localhost:8080`) for the feature to work correctly.</p>
@@ -97,26 +112,29 @@
             <p>No results found.</p>
         </div>
 
-        <!-- 
-          ******************************************************************
-          * UPDATED: Changed grid to single-column (grid-cols-1)
-          * and increased gap for a "list" feel instead of "cards".
-          ******************************************************************
-        -->
         <main id="app-container" class="hidden grid grid-cols-1 gap-8"></main>
 
     </div>
 
     <script>
-        // Store the parsed data globally for button access
+        // Store the parsed data globally
         let linkData = null;
+        
+        // Store filter states globally
+        let allTags = new Set();
+        let activeTags = new Set();
+        let currentSort = 'custom';
+        let currentGroupSort = 'custom'; 
+        let currentQuery = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderLinks();
             
-            // Listen for clicks on the main container for event delegation
             const appContainer = document.getElementById('app-container');
             appContainer.addEventListener('click', handleAppClick);
+            
+            const tagContainer = document.getElementById('tag-pills-container');
+            tagContainer.addEventListener('click', handleTagClick);
         });
 
         /**
@@ -128,31 +146,64 @@
             const errorMsgEl = document.getElementById('error-message');
             const appEl = document.getElementById('app-container');
 
+            // Get elements for persistence
+            const searchInput = document.getElementById('search-bar');
+            const sortSelect = document.getElementById('sort-select');
+            const groupSortSelect = document.getElementById('group-sort-select');
+
+            // Restore saved values from localStorage
+            currentQuery = localStorage.getItem('linkLauncherQuery') || '';
+            currentSort = localStorage.getItem('linkLauncherSort') || 'custom';
+            currentGroupSort = localStorage.getItem('linkLauncherGroupSort') || 'custom';
+            activeTags = new Set(JSON.parse(localStorage.getItem('linkLauncherTags') || '[]'));
+
+            // Apply restored values to inputs
+            searchInput.value = currentQuery;
+            sortSelect.value = currentSort;
+            groupSortSelect.value = currentGroupSort;
+
             try {
-                // 1. Fetch the YAML file
-                const response = await fetch('links.yaml');
+                // 1. Fetch the YAML file with cache-busting
+                const response = await fetch('links.yaml', {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                });
                 if (!response.ok) {
                     throw new Error(`Failed to fetch links.yaml (Status: ${response.status})`);
                 }
                 const yamlText = await response.text();
 
                 // 2. Parse the YAML
-                // 'jsyaml' is available from the CDN script in the <head>
                 linkData = jsyaml.load(yamlText);
 
                 if (!linkData || !linkData.groups) {
                     throw new Error("YAML file is valid but doesn't contain a 'groups' list.");
                 }
 
-                // 3. Render the application
-                renderApp(linkData.groups, ""); // Pass an empty query initially
+                // 3. NEW: Discover all tags
+                allTags.clear();
+                linkData.groups.forEach(group => {
+                    group.links.forEach(link => {
+                        if (link.tags && Array.isArray(link.tags)) {
+                            link.tags.forEach(tag => allTags.add(tag));
+                        }
+                    });
+                });
+                
+                // 4. NEW: Render tags
+                renderTagPills();
 
-                // 4. Update UI state
+                // 5. Render the application
+                renderApp(); 
+
+                // 6. Update UI state
                 loadingEl.classList.add('hidden');
                 appEl.classList.remove('hidden');
 
-                // 5. NEW: Add search event listener
-                document.getElementById('search-bar').addEventListener('input', handleSearch);
+                // 7. Add event listeners
+                searchInput.addEventListener('input', handleSearch);
+                sortSelect.addEventListener('change', handleSort);
+                groupSortSelect.addEventListener('change', handleGroupSort);
 
             } catch (error) {
                 console.error("Error loading links:", error);
@@ -161,150 +212,225 @@
                 errorEl.classList.remove('hidden');
             }
         }
+        
+        /**
+         * NEW: Renders the tag filter buttons
+         */
+        function renderTagPills() {
+            const tagContainer = document.getElementById('tag-pills-container');
+            const tagFilterContainer = document.getElementById('tag-filter-container');
+            tagContainer.innerHTML = ''; // Clear old tags
+            
+            if (allTags.size === 0) {
+                tagFilterContainer.classList.add('hidden');
+                return; // No tags to render
+            }
+            
+            tagFilterContainer.classList.remove('hidden');
+            
+            const sortedTags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
+            
+            sortedTags.forEach(tag => {
+                const button = document.createElement('button');
+                const isActive = activeTags.has(tag);
+                button.className = `tag-btn ${isActive ? 'tag-btn-active' : 'tag-btn-inactive'}`;
+                button.textContent = tag;
+                button.setAttribute('data-tag', tag);
+                tagContainer.appendChild(button);
+            });
+        }
 
         /**
-         * Renders the link groups and cards into the DOM
-         * @param {Array} groups - The array of groups from the YAML file
-         * @param {string} query - The search query to filter by
+         * Renders the link groups and cards based on current filters
          */
-        function renderApp(groups, query = "") {
+        function renderApp() {
+            if (!linkData || !linkData.groups) return;
+
             const appEl = document.getElementById('app-container');
             const noResultsEl = document.getElementById('no-results');
             appEl.innerHTML = ''; // Clear previous content
             let hasVisibleCards = false;
-
-            if (groups.length === 0) {
-                appEl.innerHTML = `<p class="text-gray-400 col-span-2 text-center">No link groups found in 'links.yaml'.</p>`;
-                return;
+            
+            // 1. Sort groups
+            let sortedGroups = [...linkData.groups];
+            if (currentGroupSort === 'az') {
+                sortedGroups.sort((a, b) => a.title.localeCompare(b.title));
             }
 
-            // A. If there is no query, render all groups with all links
-            if (query === "") {
-                groups.forEach((group, groupIndex) => {
-                    renderGroupCard(group, groupIndex, group.links);
-                });
-                hasVisibleCards = (groups.length > 0);
-            } 
-            // B. If there IS a query, filter based on the new logic
-            else {
-                groups.forEach((group, groupIndex) => {
-                    const titleMatch = group.title.toLowerCase().includes(query);
+            // 2. Filter and render groups
+            sortedGroups.forEach((group) => {
+                const originalIndex = linkData.groups.indexOf(group);
+                
+                // Check if group title matches search
+                const titleMatch = group.title.toLowerCase().includes(currentQuery);
+                
+                // Filter links based on search AND tags
+                const matchingLinks = group.links.filter(link => {
+                    const nameMatch = link.name.toLowerCase().includes(currentQuery);
+                    const urlMatch = link.url.toLowerCase().includes(currentQuery);
                     
-                    if (titleMatch) {
-                        // 1. Title matches: render card with ALL links
-                        renderGroupCard(group, groupIndex, group.links);
-                        hasVisibleCards = true;
-                    } else {
-                        // 2. Title doesn't match, check links
-                        const matchingLinks = group.links.filter(link => 
-                            link.name.toLowerCase().includes(query) || 
-                            link.url.toLowerCase().includes(query)
-                        );
-                        
-                        if (matchingLinks.length > 0) {
-                            // 3. Links match: render card with ONLY matching links
-                            renderGroupCard(group, groupIndex, matchingLinks);
-                            hasVisibleCards = true;
+                    // Check search query
+                    const searchMatch = (currentQuery === "") || titleMatch || nameMatch || urlMatch;
+                    if (!searchMatch) return false;
+                    
+                    // Check active tags (if any are selected)
+                    if (activeTags.size > 0) {
+                        if (!link.tags || !Array.isArray(link.tags)) {
+                            return false; // Link has no tags, so it can't match
                         }
+                        // Link must have ALL active tags
+                        return Array.from(activeTags).every(activeTag => link.tags.includes(activeTag));
                     }
-                    // 4. No match: do nothing, card is not rendered
+                    
+                    return true; // Passes search and no tags are active
                 });
-            }
 
-            // Show or hide the "No results" message
+                // Now decide what to render
+                if (titleMatch && activeTags.size === 0 && currentQuery === "") {
+                    // Default view: No search, no tags. Show all links.
+                    renderGroupCard(group, originalIndex, group.links);
+                    hasVisibleCards = true;
+                } else if (titleMatch && activeTags.size === 0) {
+                    // Search query matches title, and no tags. Show all links.
+                    renderGroupCard(group, originalIndex, group.links);
+                    hasVisibleCards = true;
+                } else if (matchingLinks.length > 0) {
+                    // We have filtered links (by search, tags, or both)
+                    renderGroupCard(group, originalIndex, matchingLinks);
+                    hasVisibleCards = true;
+                }
+            });
+
             noResultsEl.classList.toggle('hidden', hasVisibleCards);
         }
         
         /**
-         * NEW: Creates a single group card and appends it to the DOM
-         * @param {object} group - The group object
-         * @param {number} groupIndex - The original index (for the 'Open All' button)
-         * @param {Array} linksToShow - The specific array of links to render
+         * Creates a single group card and appends it to the DOM
          */
         function renderGroupCard(group, groupIndex, linksToShow) {
             const appEl = document.getElementById('app-container');
             
-            // Create the group card
             const card = document.createElement('div');
-            // MODIFIED: Removed padding from the card, will add to header
             card.className = 'bg-gray-800 shadow-lg rounded-lg flex flex-col link-group-card overflow-hidden'; 
             
             let linksHtml = '';
-            if (linksToShow && linksToShow.length > 0) {
-                
-                // NEW: Utility to get hostname for favicon
+
+            // Sort the linksToShow array based on currentSort
+            let sortedLinks = [...linksToShow];
+            if (currentSort === 'az') {
+                sortedLinks.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            if (sortedLinks && sortedLinks.length > 0) {
                 const getHostname = (url) => {
-                    try {
-                        return new URL(url).hostname;
-                    } catch (e) {
-                        return 'example.com'; // Fallback
-                    }
+                    try { return new URL(url).hostname; } catch (e) { return 'example.com'; }
                 };
                 
-                // NEW: Use a simple div container for the list
-                linksHtml = linksToShow.map(link => `
+                linksHtml = sortedLinks.map(link => {
+                    // NEW: Render tags for this link
+                    let tagsHtml = '';
+                    if (link.tags && Array.isArray(link.tags)) {
+                        tagsHtml = link.tags.map(tag => 
+                            `<span class="bg-gray-600 text-gray-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${tag}</span>`
+                        ).join('');
+                    }
+
+                    return `
                     <li class="flex items-center p-3 hover:bg-gray-700 transition-colors duration-150">
                         <img 
                             src="https://www.google.com/s2/favicons?domain=${getHostname(link.url)}&sz=32" 
                             alt="favicon" 
-                            class="w-5 h-5 mr-3 rounded-sm"
+                            class="w-5 h-5 mr-3 rounded-sm flex-shrink-0"
                             onerror="this.style.display='none'"
                         >
-                        <div class="flex-1 truncate">
+                        <div class="flex-1 truncate min-w-0">
                             <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
-                               class="text-blue-400 hover:text-blue-300 text-base" 
+                               class="text-blue-400 hover:text-blue-300 text-base truncate block" 
                                title="${link.name}">
                                 ${link.name}
                             </a>
                             <p class="text-gray-400 text-xs truncate" title="${link.url}">
                                 ${link.url}
                             </p>
+                            <!-- NEW: Tags display -->
+                            <div class="mt-2 flex flex-wrap gap-1 ${tagsHtml ? '' : 'hidden'}">
+                                ${tagsHtml}
+                            </div>
                         </div>
                     </li>
-                `).join('');
-                // NEW: Wrap in a <ul>
+                `}).join('');
                 linksHtml = `<ul class="divide-y divide-gray-700">${linksHtml}</ul>`;
 
             } else {
-                // This case should only happen if a group has no links
-                linksHtml = '<p class="text-gray-500 p-4">No links in this group.</p>';
+                linksHtml = '<p class="text-gray-500 p-4">No links match your current filter.</p>';
             }
 
             card.innerHTML = `
                 <div class="flex-grow">
-                    <!-- NEW: Added padding to the header area -->
                     <div class="flex justify-between items-center p-4 border-b border-gray-700">
-                        <h2 class="text-2xl font-bold text-white">${group.title}</h2>
-                        <!-- NEW: Moved button to the header -->
+                        <h2 class="text-2xl font-bold text-white truncate" title="${group.title}">${group.title}</h2>
                         <button class="btn btn-blue open-all-btn flex-shrink-0" data-group-index="${groupIndex}">
                             Open All
                         </button>
                     </div>
                     
-                    <!-- This div will contain the link list -->
                     <div class="space-y-1">
                         ${linksHtml}
                     </div>
                 </div>
-                <!-- 
-                  ******************************************************************
-                  * REMOVED: Button was moved to the header
-                  ******************************************************************
-                -->
             `;
             
             appEl.appendChild(card);
         }
 
-
         /**
-         * NEW: Handles search input by re-rendering the app
+         * Handles search input by re-rendering the app
          */
         function handleSearch(event) {
-            const query = event.target.value.toLowerCase();
-            if (linkData && linkData.groups) {
-                renderApp(linkData.groups, query);
+            currentQuery = event.target.value.toLowerCase();
+            localStorage.setItem('linkLauncherQuery', currentQuery);
+            renderApp();
+        }
+
+        /**
+         * Handles sort selection change by re-rendering the app
+         */
+        function handleSort(event) {
+            currentSort = event.target.value;
+            localStorage.setItem('linkLauncherSort', currentSort);
+            renderApp();
+        }
+
+        /**
+         * Handles group sort selection change by re-rendering the app
+         */
+        function handleGroupSort(event) {
+            currentGroupSort = event.target.value;
+            localStorage.setItem('linkLauncherGroupSort', currentGroupSort);
+            renderApp();
+        }
+        
+        /**
+         * NEW: Handles tag button clicks for filtering
+         */
+        function handleTagClick(event) {
+            const target = event.target.closest('.tag-btn');
+            if (!target) return;
+            
+            const tag = target.getAttribute('data-tag');
+            if (activeTags.has(tag)) {
+                activeTags.delete(tag);
+                target.classList.replace('tag-btn-active', 'tag-btn-inactive');
+            } else {
+                activeTags.add(tag);
+                target.classList.replace('tag-btn-inactive', 'tag-btn-active');
             }
+            
+            // Save active tags to localStorage
+            localStorage.setItem('linkLauncherTags', JSON.stringify(Array.from(activeTags)));
+            
+            // Re-render the app with the new tag filter
+            renderApp();
         }
 
 
@@ -312,20 +438,18 @@
          * Handles clicks within the app container (event delegation)
          */
         function handleAppClick(event) {
-            // NEW: Updated to find the button anywhere in the card
             const target = event.target.closest('.open-all-btn');
-
-            // Check if an "Open All" button was clicked
             if (target) {
                 const groupIndex = target.getAttribute('data-group-index');
                 
                 if (linkData && linkData.groups[groupIndex]) {
+                    // "Open All" always opens ALL links in the original group,
+                    // respecting no filters, as per the original design.
                     const linksToOpen = linkData.groups[groupIndex].links;
                     
                     if (linksToOpen && linksToOpen.length > 0) {
                         console.log(`Opening ${linksToOpen.length} links for group '${linkData.groups[groupIndex].title}'...`);
                         linksToOpen.forEach((link, i) => {
-                            // This will be blocked by pop-up blockers!
                             window.open(link.url, '_blank');
                         });
                     } else {
@@ -338,4 +462,3 @@
     </script>
 </body>
 </html>
-
