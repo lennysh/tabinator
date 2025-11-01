@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Link Launcher</title>
     <!-- 1. Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,21 +18,18 @@
     </style>
     
     <style type="text/tailwindcss">
-        /* Simple transition for button hover */
+        /* NEW: Added button styles back */
         .btn {
             @apply px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ease-in-out;
         }
         .btn-blue {
             @apply bg-blue-600 hover:bg-blue-700 shadow-md;
         }
-        .btn-green {
-            @apply bg-green-600 hover:bg-green-700 shadow-sm;
-        }
         body {
             @apply font-sans min-h-screen;
         }
         
-        /* NEW: Styles for the tag filter buttons */
+        /* Styles for the tag filter buttons */
         .tag-btn {
             @apply px-3 py-1 text-sm rounded-full cursor-pointer transition-all duration-150 ease-in-out;
         }
@@ -50,7 +47,7 @@
         
         <header class="mb-8">
             <h1 class="text-4xl font-bold text-white mb-2">Link Launcher</h1>
-            <p class="text-lg text-gray-400 mb-6">Your self-hosted link group dashboard.</p>
+            <p class="text-lg text-gray-400 mb-6">Your self-hosted link dashboard.</p>
             
             <input
                 type="search"
@@ -59,16 +56,8 @@
                 class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
-            <div class="mt-4 sm:flex sm:space-x-4">
-                <div class="sm:w-1/2">
-                    <label for="group-sort-select" class="block text-sm font-medium text-gray-400">Sort groups by:</label>
-                    <select id="group-sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
-                        <option value="custom">Custom Order (default)</option>
-                        <option value="az">A-Z (by title)</option>
-                    </select>
-                </div>
-
-                <div class="sm:w-1/2 mt-4 sm:mt-0">
+            <div class="mt-4">
+                <div>
                     <label for="sort-select" class="block text-sm font-medium text-gray-400">Sort links by:</label>
                     <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
                         <option value="custom">Custom Order (default)</option>
@@ -77,24 +66,36 @@
                 </div>
             </div>
             
-            <!-- 
-              ******************************************************************
-              * NEW: Tag Filtering Section
-              ******************************************************************
-            -->
             <div id="tag-filter-container" class="mt-6 hidden">
                 <label class="block text-sm font-medium text-gray-400 mb-2">Filter by Tags:</label>
                 <div id="tag-pills-container" class="flex flex-wrap gap-2">
                     <!-- Tag buttons will be dynamically inserted here -->
                 </div>
             </div>
+            
+            <!-- 
+              ******************************************************************
+              * NEW: "Open All Filtered" Button
+              ******************************************************************
+            -->
+            <div class="mt-6">
+                <button id="open-all-filtered-btn" class="btn btn-blue w-full">
+                    Open All Filtered Links
+                </button>
+            </div>
 
         </header>
 
+        <!-- 
+          ******************************************************************
+          * NEW: Pop-up blocker warning is back
+          ******************************************************************
+        -->
         <div class="bg-yellow-800 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg mb-8" role="alert">
             <p class="font-bold">Heads up!</p>
-            <p>Your browser's pop-up blocker will likely prevent the "Open All" buttons from working. Please **allow pop-ups** from this site (`http://localhost:8080`) for the feature to work correctly.</p>
+            <p>Your browser's pop-up blocker will likely prevent the "Open All" button from working. Please **allow pop-ups** from this site (`http://localhost:8080`) for the feature to work correctly.</p>
         </div>
+
 
         <!-- Loading State -->
         <div id="loading-state" class="text-center text-gray-400 text-lg">
@@ -112,26 +113,29 @@
             <p>No results found.</p>
         </div>
 
-        <main id="app-container" class="hidden grid grid-cols-1 gap-8"></main>
+        <main id="app-container" class="hidden bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+            <!-- Link list will be rendered here -->
+        </main>
 
     </div>
 
     <script>
         // Store the parsed data globally
         let linkData = null;
+        // NEW: Store the currently visible links for the "Open All" button
+        let currentlyFilteredLinks = [];
         
         // Store filter states globally
         let allTags = new Set();
         let activeTags = new Set();
         let currentSort = 'custom';
-        let currentGroupSort = 'custom'; 
         let currentQuery = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderLinks();
             
-            const appContainer = document.getElementById('app-container');
-            appContainer.addEventListener('click', handleAppClick);
+            // NEW: Add click listener for the main "Open All" button
+            document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             
             const tagContainer = document.getElementById('tag-pills-container');
             tagContainer.addEventListener('click', handleTagClick);
@@ -146,21 +150,17 @@
             const errorMsgEl = document.getElementById('error-message');
             const appEl = document.getElementById('app-container');
 
-            // Get elements for persistence
             const searchInput = document.getElementById('search-bar');
             const sortSelect = document.getElementById('sort-select');
-            const groupSortSelect = document.getElementById('group-sort-select');
 
             // Restore saved values from localStorage
             currentQuery = localStorage.getItem('linkLauncherQuery') || '';
             currentSort = localStorage.getItem('linkLauncherSort') || 'custom';
-            currentGroupSort = localStorage.getItem('linkLauncherGroupSort') || 'custom';
             activeTags = new Set(JSON.parse(localStorage.getItem('linkLauncherTags') || '[]'));
 
             // Apply restored values to inputs
             searchInput.value = currentQuery;
             sortSelect.value = currentSort;
-            groupSortSelect.value = currentGroupSort;
 
             try {
                 // 1. Fetch the YAML file with cache-busting
@@ -176,21 +176,19 @@
                 // 2. Parse the YAML
                 linkData = jsyaml.load(yamlText);
 
-                if (!linkData || !linkData.groups) {
-                    throw new Error("YAML file is valid but doesn't contain a 'groups' list.");
+                if (!linkData || !linkData.links) {
+                    throw new Error("YAML file is valid but doesn't contain a 'links' list.");
                 }
 
-                // 3. NEW: Discover all tags
+                // 3. Discover all tags
                 allTags.clear();
-                linkData.groups.forEach(group => {
-                    group.links.forEach(link => {
-                        if (link.tags && Array.isArray(link.tags)) {
-                            link.tags.forEach(tag => allTags.add(tag));
-                        }
-                    });
+                linkData.links.forEach(link => {
+                    if (link.tags && Array.isArray(link.tags)) {
+                        link.tags.forEach(tag => allTags.add(tag));
+                    }
                 });
                 
-                // 4. NEW: Render tags
+                // 4. Render tags
                 renderTagPills();
 
                 // 5. Render the application
@@ -203,7 +201,6 @@
                 // 7. Add event listeners
                 searchInput.addEventListener('input', handleSearch);
                 sortSelect.addEventListener('change', handleSort);
-                groupSortSelect.addEventListener('change', handleGroupSort);
 
             } catch (error) {
                 console.error("Error loading links:", error);
@@ -214,7 +211,7 @@
         }
         
         /**
-         * NEW: Renders the tag filter buttons
+         * Renders the tag filter buttons
          */
         function renderTagPills() {
             const tagContainer = document.getElementById('tag-pills-container');
@@ -244,143 +241,102 @@
          * Renders the link groups and cards based on current filters
          */
         function renderApp() {
-            if (!linkData || !linkData.groups) return;
+            if (!linkData || !linkData.links) return;
 
             const appEl = document.getElementById('app-container');
             const noResultsEl = document.getElementById('no-results');
             appEl.innerHTML = ''; // Clear previous content
-            let hasVisibleCards = false;
             
-            // 1. Sort groups
-            let sortedGroups = [...linkData.groups];
-            if (currentGroupSort === 'az') {
-                sortedGroups.sort((a, b) => a.title.localeCompare(b.title));
-            }
-
-            // 2. Filter and render groups
-            sortedGroups.forEach((group) => {
-                const originalIndex = linkData.groups.indexOf(group);
+            // 1. Filter links based on search AND tags
+            const matchingLinks = linkData.links.filter(link => {
+                const nameMatch = link.name.toLowerCase().includes(currentQuery);
+                const urlMatch = link.url.toLowerCase().includes(currentQuery);
                 
-                // Check if group title matches search
-                const titleMatch = group.title.toLowerCase().includes(currentQuery);
+                const searchMatch = (currentQuery === "") || nameMatch || urlMatch;
+                if (!searchMatch) return false;
                 
-                // Filter links based on search AND tags
-                const matchingLinks = group.links.filter(link => {
-                    const nameMatch = link.name.toLowerCase().includes(currentQuery);
-                    const urlMatch = link.url.toLowerCase().includes(currentQuery);
-                    
-                    // Check search query
-                    const searchMatch = (currentQuery === "") || titleMatch || nameMatch || urlMatch;
-                    if (!searchMatch) return false;
-                    
-                    // Check active tags (if any are selected)
-                    if (activeTags.size > 0) {
-                        if (!link.tags || !Array.isArray(link.tags)) {
-                            return false; // Link has no tags, so it can't match
-                        }
-                        // Link must have ALL active tags
-                        return Array.from(activeTags).every(activeTag => link.tags.includes(activeTag));
+                if (activeTags.size > 0) {
+                    if (!link.tags || !Array.isArray(link.tags)) {
+                        return false; 
                     }
-                    
-                    return true; // Passes search and no tags are active
-                });
-
-                // Now decide what to render
-                if (titleMatch && activeTags.size === 0 && currentQuery === "") {
-                    // Default view: No search, no tags. Show all links.
-                    renderGroupCard(group, originalIndex, group.links);
-                    hasVisibleCards = true;
-                } else if (titleMatch && activeTags.size === 0) {
-                    // Search query matches title, and no tags. Show all links.
-                    renderGroupCard(group, originalIndex, group.links);
-                    hasVisibleCards = true;
-                } else if (matchingLinks.length > 0) {
-                    // We have filtered links (by search, tags, or both)
-                    renderGroupCard(group, originalIndex, matchingLinks);
-                    hasVisibleCards = true;
+                    return Array.from(activeTags).every(activeTag => link.tags.includes(activeTag));
                 }
+                
+                return true;
             });
 
-            noResultsEl.classList.toggle('hidden', hasVisibleCards);
-        }
-        
-        /**
-         * Creates a single group card and appends it to the DOM
-         */
-        function renderGroupCard(group, groupIndex, linksToShow) {
-            const appEl = document.getElementById('app-container');
-            
-            const card = document.createElement('div');
-            card.className = 'bg-gray-800 shadow-lg rounded-lg flex flex-col link-group-card overflow-hidden'; 
-            
-            let linksHtml = '';
-
-            // Sort the linksToShow array based on currentSort
-            let sortedLinks = [...linksToShow];
+            // 2. Sort the filtered links
+            let sortedLinks = [...matchingLinks];
             if (currentSort === 'az') {
                 sortedLinks.sort((a, b) => a.name.localeCompare(b.name));
             }
-
-            if (sortedLinks && sortedLinks.length > 0) {
-                const getHostname = (url) => {
-                    try { return new URL(url).hostname; } catch (e) { return 'example.com'; }
-                };
-                
-                linksHtml = sortedLinks.map(link => {
-                    // NEW: Render tags for this link
-                    let tagsHtml = '';
-                    if (link.tags && Array.isArray(link.tags)) {
-                        tagsHtml = link.tags.map(tag => 
-                            `<span class="bg-gray-600 text-gray-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${tag}</span>`
-                        ).join('');
-                    }
-
-                    return `
-                    <li class="flex items-center p-3 hover:bg-gray-700 transition-colors duration-150">
-                        <img 
-                            src="https://www.google.com/s2/favicons?domain=${getHostname(link.url)}&sz=32" 
-                            alt="favicon" 
-                            class="w-5 h-5 mr-3 rounded-sm flex-shrink-0"
-                            onerror="this.style.display='none'"
-                        >
-                        <div class="flex-1 truncate min-w-0">
-                            <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
-                               class="text-blue-400 hover:text-blue-300 text-base truncate block" 
-                               title="${link.name}">
-                                ${link.name}
-                            </a>
-                            <p class="text-gray-400 text-xs truncate" title="${link.url}">
-                                ${link.url}
-                            </p>
-                            <!-- NEW: Tags display -->
-                            <div class="mt-2 flex flex-wrap gap-1 ${tagsHtml ? '' : 'hidden'}">
-                                ${tagsHtml}
-                            </div>
-                        </div>
-                    </li>
-                `}).join('');
-                linksHtml = `<ul class="divide-y divide-gray-700">${linksHtml}</ul>`;
-
-            } else {
-                linksHtml = '<p class="text-gray-500 p-4">No links match your current filter.</p>';
-            }
-
-            card.innerHTML = `
-                <div class="flex-grow">
-                    <div class="flex justify-between items-center p-4 border-b border-gray-700">
-                        <h2 class="text-2xl font-bold text-white truncate" title="${group.title}">${group.title}</h2>
-                        <button class="btn btn-blue open-all-btn flex-shrink-0" data-group-index="${groupIndex}">
-                            Open All
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-1">
-                        ${linksHtml}
-                    </div>
-                </div>
-            `;
             
-            appEl.appendChild(card);
+            // 3. NEW: Store the filtered links for the "Open All" button
+            currentlyFilteredLinks = sortedLinks;
+            
+            // 4. Render the final list
+            if (sortedLinks.length > 0) {
+                renderLinkList(sortedLinks);
+                noResultsEl.classList.add('hidden');
+            } else {
+                noResultsEl.classList.remove('hidden');
+            }
+            
+            // 5. NEW: Update the "Open All" button text
+            const openAllBtn = document.getElementById('open-all-filtered-btn');
+            openAllBtn.textContent = `Open All Filtered Links (${currentlyFilteredLinks.length})`;
+            openAllBtn.disabled = currentlyFilteredLinks.length === 0;
+            if (openAllBtn.disabled) {
+                openAllBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                openAllBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        /**
+         * Renders the final list of links into the app container
+         */
+        function renderLinkList(links) {
+            const appEl = document.getElementById('app-container');
+            
+            const getHostname = (url) => {
+                try { return new URL(url).hostname; } catch (e) { return 'example.com'; }
+            };
+            
+            const linksHtml = links.map(link => {
+                let tagsHtml = '';
+                if (link.tags && Array.isArray(link.tags)) {
+                    tagsHtml = link.tags.map(tag => 
+                        `<span class="bg-gray-600 text-gray-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${tag}</span>`
+                    ).join('');
+                }
+
+                return `
+                <li class="flex items-center p-3 hover:bg-gray-700 transition-colors duration-150">
+                    <img 
+                        src="https://www.google.com/s2/favicons?domain=${getHostname(link.url)}&sz=32" 
+                        alt="favicon" 
+                        class="w-5 h-5 mr-3 rounded-sm flex-shrink-0"
+                        onerror="this.style.display='none'"
+                    >
+                    <div class="flex-1 truncate min-w-0">
+                        <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
+                           class="text-blue-400 hover:text-blue-300 text-base truncate block" 
+                           title="${link.name}">
+                            ${link.name}
+                        </a>
+                        <p class="text-gray-400 text-xs truncate" title="${link.url}">
+                            ${link.url}
+                        </p>
+                        <div class="mt-2 flex flex-wrap gap-1 ${tagsHtml ? '' : 'hidden'}">
+                            ${tagsHtml}
+                        </div>
+                    </div>
+                </li>
+                `;
+            }).join('');
+            
+            appEl.innerHTML = `<ul class="divide-y divide-gray-700">${linksHtml}</ul>`;
         }
 
         /**
@@ -400,18 +356,9 @@
             localStorage.setItem('linkLauncherSort', currentSort);
             renderApp();
         }
-
-        /**
-         * Handles group sort selection change by re-rendering the app
-         */
-        function handleGroupSort(event) {
-            currentGroupSort = event.target.value;
-            localStorage.setItem('linkLauncherGroupSort', currentGroupSort);
-            renderApp();
-        }
         
         /**
-         * NEW: Handles tag button clicks for filtering
+         * Handles tag button clicks for filtering
          */
         function handleTagClick(event) {
             const target = event.target.closest('.tag-btn');
@@ -426,39 +373,25 @@
                 target.classList.replace('tag-btn-inactive', 'tag-btn-active');
             }
             
-            // Save active tags to localStorage
             localStorage.setItem('linkLauncherTags', JSON.stringify(Array.from(activeTags)));
-            
-            // Re-render the app with the new tag filter
             renderApp();
         }
 
-
         /**
-         * Handles clicks within the app container (event delegation)
+         * NEW: Handles click on the main "Open All Filtered" button
          */
-        function handleAppClick(event) {
-            const target = event.target.closest('.open-all-btn');
-            if (target) {
-                const groupIndex = target.getAttribute('data-group-index');
-                
-                if (linkData && linkData.groups[groupIndex]) {
-                    // "Open All" always opens ALL links in the original group,
-                    // respecting no filters, as per the original design.
-                    const linksToOpen = linkData.groups[groupIndex].links;
-                    
-                    if (linksToOpen && linksToOpen.length > 0) {
-                        console.log(`Opening ${linksToOpen.length} links for group '${linkData.groups[groupIndex].title}'...`);
-                        linksToOpen.forEach((link, i) => {
-                            window.open(link.url, '_blank');
-                        });
-                    } else {
-                        console.warn('No links to open in this group.');
-                    }
-                }
+        function handleOpenAllFiltered() {
+            if (currentlyFilteredLinks && currentlyFilteredLinks.length > 0) {
+                console.log(`Opening ${currentlyFilteredLinks.length} filtered links...`);
+                currentlyFilteredLinks.forEach((link, i) => {
+                    window.open(link.url, '_blank');
+                });
+            } else {
+                console.warn('No filtered links to open.');
             }
         }
 
     </script>
 </body>
 </html>
+
