@@ -35,7 +35,11 @@
             @apply bg-gray-700 text-gray-300 hover:bg-gray-600;
         }
         .tag-btn-active {
-            @apply bg-blue-600 text-white font-medium ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900;
+            /* MODIFIED: Groups are active with Indigo, Tags with Blue */
+            @apply bg-indigo-600 text-white font-medium ring-2 ring-indigo-400 ring-offset-2 ring-offset-gray-900;
+        }
+        .tag-btn-active-tag {
+             @apply bg-blue-600 text-white font-medium ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900;
         }
         .tag-btn-hidden {
             @apply hidden;
@@ -107,11 +111,6 @@
             <!-- Right Column for Tag Sidebar -->
             <div class="md:col-span-1">
                 <div class="sticky top-8 space-y-6">
-                    <!-- 
-                      ******************************************************************
-                      * NEW: Group Filter Container
-                      ******************************************************************
-                    -->
                     <div id="group-filter-container" class="hidden bg-gray-800 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-400 mb-3">Filter by Groups:</label>
                         <div id="group-pills-container" class="flex flex-wrap gap-2 max-h-[35vh] overflow-y-auto">
@@ -119,11 +118,6 @@
                         </div>
                     </div>
                     
-                    <!-- 
-                      ******************************************************************
-                      * MODIFIED: Tag Filter Container (added max-height)
-                      ******************************************************************
-                    -->
                     <div id="tag-filter-container" class="hidden bg-gray-800 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-400 mb-3">Filter by Tags:</label>
                         <div id="tag-pills-container" class="flex flex-wrap gap-2 max-h-[35vh] overflow-y-auto">
@@ -139,27 +133,27 @@
 
     <script>
         // Store the parsed data globally
-        let linkData = null;
+        let linkData = null; // Will hold { links: [], groups: [] }
         let currentlyFilteredLinks = [];
         
         // Store filter states globally
         let allTags = new Set();
         let activeTags = new Set();
-        let allGroups = new Set(); // NEW
-        let activeGroups = new Set(); // NEW
+        let allGroups = new Set(); // NEW: Will hold group *names*
+        let activeGroups = new Set();
         
         let currentSort = 'custom';
         let currentQuery = '';
         
         let tagButtonElements = {};
-        let groupButtonElements = {}; // NEW
+        let groupButtonElements = {};
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderLinks();
             
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
-            document.getElementById('group-pills-container').addEventListener('click', handleGroupClick); // NEW
+            document.getElementById('group-pills-container').addEventListener('click', handleGroupClick);
         });
 
         /**
@@ -178,7 +172,7 @@
             currentQuery = localStorage.getItem('linkLauncherQuery') || '';
             currentSort = localStorage.getItem('linkLauncherSort') || 'custom';
             activeTags = new Set(JSON.parse(localStorage.getItem('linkLauncherTags') || '[]'));
-            activeGroups = new Set(JSON.parse(localStorage.getItem('linkLauncherGroups') || '[]')); // NEW
+            activeGroups = new Set(JSON.parse(localStorage.getItem('linkLauncherGroups') || '[]'));
 
             // Apply restored values to inputs
             searchInput.value = currentQuery;
@@ -201,18 +195,28 @@
                 if (!linkData || !linkData.links) {
                     throw new Error("YAML file is valid but doesn't contain a 'links' list.");
                 }
+                // Ensure linkData.groups exists, even if empty
+                if (!linkData.groups) {
+                    linkData.groups = [];
+                }
+
 
                 // 3. Discover all tags and groups
                 allTags.clear();
-                allGroups.clear(); // NEW
+                allGroups.clear();
                 linkData.links.forEach(link => {
                     link.tags?.forEach(tag => allTags.add(tag));
-                    link.groups?.forEach(group => allGroups.add(group)); // NEW
+                });
+                // NEW: Get group names from the group definitions
+                linkData.groups.forEach(group => {
+                    if (group.name) {
+                        allGroups.add(group.name);
+                    }
                 });
                 
                 // 4. Create tag and group pill elements ONCE
                 createTagPills();
-                createGroupPills(); // NEW
+                createGroupPills();
 
                 // 5. Render the application
                 renderApp(); 
@@ -274,14 +278,15 @@
             }
             
             groupFilterContainer.classList.remove('hidden');
+            // NEW: Sort by name from the allGroups Set
             const sortedGroups = Array.from(allGroups).sort((a, b) => a.localeCompare(b));
             
-            sortedGroups.forEach(group => {
+            sortedGroups.forEach(groupName => {
                 const button = document.createElement('button');
-                button.textContent = group;
-                button.setAttribute('data-group', group);
+                button.textContent = groupName;
+                button.setAttribute('data-group', groupName);
                 groupContainer.appendChild(button);
-                groupButtonElements[group] = button;
+                groupButtonElements[groupName] = button;
             });
         }
         
@@ -295,7 +300,8 @@
                 const isAvailable = availableTags.has(tag);
 
                 if (isActive) {
-                    button.className = 'tag-btn tag-btn-active';
+                    // NEW: Added specific active class for tags
+                    button.className = 'tag-btn tag-btn-active-tag';
                 } else if (isAvailable) {
                     button.className = 'tag-btn tag-btn-inactive';
                 } else {
@@ -308,12 +314,13 @@
          * NEW: Updates the visibility and state of group pills based on filtered links
          */
         function updateGroupPills(availableGroups) {
-             for (const group in groupButtonElements) {
-                const button = groupButtonElements[group];
-                const isActive = activeGroups.has(group);
-                const isAvailable = availableGroups.has(group);
+             for (const groupName in groupButtonElements) {
+                const button = groupButtonElements[groupName];
+                const isActive = activeGroups.has(groupName);
+                const isAvailable = availableGroups.has(groupName);
 
                 if (isActive) {
+                    // Active class for groups
                     button.className = 'tag-btn tag-btn-active';
                 } else if (isAvailable) {
                     button.className = 'tag-btn tag-btn-inactive';
@@ -323,6 +330,24 @@
             }
         }
 
+        /**
+         * NEW: Helper function to check if a link matches a group definition
+         */
+        function linkMatchesGroup(link, groupDef) {
+            const linkTags = new Set(link.tags || []);
+            const includes = groupDef.include_tags || [];
+            const excludes = groupDef.exclude_tags || [];
+
+            // Check for inclusion (must have ALL)
+            const hasAllIncludes = includes.every(tag => linkTags.has(tag));
+            if (!hasAllIncludes) return false;
+
+            // Check for exclusion (must have NONE)
+            const hasNoExcludes = excludes.every(tag => !linkTags.has(tag));
+            if (!hasNoExcludes) return false;
+
+            return true;
+        }
 
         /**
          * Renders the link groups and cards based on current filters
@@ -353,22 +378,46 @@
                 });
             }
 
-            // 3. NEW: Filter by Active Groups (OR logic)
+            // 3. NEW: Filter by Active Groups (OR logic on definitions)
             let finalFilteredLinks = [...tagsFilteredLinks];
             if (activeGroups.size > 0) {
-                finalFilteredLinks = finalFilteredLinks.filter(link => {
-                    if (!link.groups || !Array.isArray(link.groups)) return false;
-                    // Return true if *any* of the link's groups are in the activeGroups set
-                    return link.groups.some(group => activeGroups.has(group));
+                const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
+                
+                finalFilteredLinks = tagsFilteredLinks.filter(link => {
+                    // Return true if the link matches *any* of the active group definitions
+                    return activeGroupDefs.some(groupDef => linkMatchesGroup(link, groupDef));
                 });
             }
             
-            // 4. Calculate available tags and groups based on the *final* filtered list
-            const availableTags = new Set();
+            // 4. Calculate available tags and groups
+            // Available groups are calculated from the search/tag filtered list
+            // Available tags are calculated from the search/group filtered list
+            
+            // NEW: Calculate which groups are available *after* search+tag filters
             const availableGroups = new Set();
-            finalFilteredLinks.forEach(link => {
+            const allGroupDefs = linkData.groups || [];
+            tagsFilteredLinks.forEach(link => {
+                allGroupDefs.forEach(groupDef => {
+                    if (availableGroups.has(groupDef.name)) return; // Already know this group is available
+                    if (linkMatchesGroup(link, groupDef)) {
+                        availableGroups.add(groupDef.name);
+                    }
+                });
+            });
+
+            // NEW: Calculate which groups-filtered links to use for tag faceting
+            let groupsFilteredLinks = [...searchFilteredLinks];
+            if (activeGroups.size > 0) {
+                 const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
+                 groupsFilteredLinks = searchFilteredLinks.filter(link => {
+                    return activeGroupDefs.some(groupDef => linkMatchesGroup(link, groupDef));
+                });
+            }
+
+            // NEW: Calculate available tags *after* search+group filters
+            const availableTags = new Set();
+            groupsFilteredLinks.forEach(link => {
                 link.tags?.forEach(tag => availableTags.add(tag));
-                link.groups?.forEach(group => availableGroups.add(group));
             });
             
             // 5. Update the tag and group pill UI
@@ -416,13 +465,7 @@
             };
             
             const linksHtml = links.map(link => {
-                let groupsHtml = ''; // NEW
-                if (link.groups && Array.isArray(link.groups)) {
-                    const sortedLinkGroups = [...link.groups].sort((a, b) => a.localeCompare(b));
-                    groupsHtml = sortedLinkGroups.map(group => 
-                        `<span class="bg-indigo-600 text-indigo-100 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${group}</span>`
-                    ).join('');
-                }
+                // REMOVED: Groups are no longer a direct property of links
                 
                 let tagsHtml = '';
                 if (link.tags && Array.isArray(link.tags)) {
@@ -449,10 +492,7 @@
                         <p class="text-gray-400 text-xs truncate" title="${link.url}">
                             ${link.url}
                         </p>
-                        <!-- NEW: Groups display -->
-                        <div class="mt-2 flex flex-wrap gap-1 ${groupsHtml ? '' : 'hidden'}">
-                            ${groupsHtml}
-                        </div>
+                        <!-- REMOVED: Groups display div -->
                         <div class="mt-2 flex flex-wrap gap-1 ${tagsHtml ? '' : 'hidden'}">
                             ${tagsHtml}
                         </div>
