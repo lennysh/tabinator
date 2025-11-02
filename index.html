@@ -330,49 +330,59 @@
                 }
             }
         }
+        
+        /**
+         * NEW: Helper to check if a link property matches ANY keyword in a list.
+         * @param {string[]} list - The list of keywords (e.g., ['github', 'ansible'])
+         * @param {string} linkProp - The property of the link to check ('name', 'url', 'tags')
+         * @param {object} link - The link object
+         */
+        function checkList(list, linkProp, link) {
+            if (!list || list.length === 0) return false; // No rules, so no match
+
+            if (linkProp === 'tags') {
+                const linkTags = new Set(link.tags || []);
+                // Does ANY tag in the list exist in the link's tags? (OR)
+                return list.some(tag => linkTags.has(tag));
+            } else {
+                // 'name' or 'url'
+                const linkValue = (link[linkProp] || '').toLowerCase();
+                // Does ANY keyword in the list exist in the link's value? (OR)
+                return list.some(keyword => linkValue.includes(keyword.toLowerCase()));
+            }
+        }
+
 
         /**
-         * Helper function to check if a link matches a "smart group" definition
+         * NEW: Revamped helper function to check if a link matches a "smart group" definition
          */
         function linkMatchesGroup(link, groupDef) {
-            const linkTags = new Set(link.tags || []);
             
-            // Helper to check a list of keywords against a link property
-            const checkList = (list, linkProp, isInclude) => {
-                if (!list || list.length === 0) return true;
-                // Ensure link[linkProp] is a string before calling .toLowerCase()
-                const linkValue = (link[linkProp] || '').toLowerCase();
-                
-                if (isInclude) {
-                    // AND logic: must match ALL keywords
-                    return list.every(keyword => linkValue.includes(keyword.toLowerCase()));
-                } else {
-                    // NOT logic: must match NONE of the keywords
-                    return list.every(keyword => !linkValue.includes(keyword.toLowerCase()));
-                }
-            };
+            // 1. Check INCLUDES (must match ALL blocks)
+            const includeBlocks = groupDef.include || [];
+            const allIncludesMatch = includeBlocks.every(block => {
+                // block = { tags: ['a'], names: ['b'] }
+                // Must match AT LEAST ONE rule in the block (OR)
+                return checkList(block.tags, 'tags', link) ||
+                       checkList(block.names, 'name', link) ||
+                       checkList(block.urls, 'url', link);
+            });
 
-            // Check for tag inclusions (must have ALL)
-            const includeTags = groupDef.include_tags || [];
-            if (!includeTags.every(tag => linkTags.has(tag))) return false;
+            if (!allIncludesMatch) return false;
 
-            // Check for tag exclusions (must have NONE)
-            const excludeTags = groupDef.exclude_tags || [];
-            if (!excludeTags.every(tag => !linkTags.has(tag))) return false;
+            // 2. Check EXCLUDES (must match NO blocks)
+            const excludeBlocks = groupDef.exclude || [];
+            const anyExcludeMatches = excludeBlocks.some(block => {
+                // block = { tags: ['d'] }
+                // Must match AT LEAST ONE rule in the block (OR)
+                return checkList(block.tags, 'tags', link) ||
+                       checkList(block.names, 'name', link) ||
+                       checkList(block.urls, 'url', link);
+            });
 
-            // Check for name inclusions (must have ALL)
-            if (!checkList(groupDef.include_names, 'name', true)) return false;
-
-            // Check for name exclusions (must have NONE)
-            if (!checkList(groupDef.exclude_names, 'name', false)) return false;
-
-            // Check for url inclusions (must have ALL)
-            if (!checkList(groupDef.include_urls, 'url', true)) return false;
-
-            // Check for url exclusions (must have NONE)
-            if (!checkList(groupDef.exclude_urls, 'url', false)) return false;
-
-            // If it passed all checks, it's a match
+            if (anyExcludeMatches) return false;
+            
+            // 3. If passed both, it's a match
             return true;
         }
 
@@ -390,10 +400,6 @@
             let searchFilteredLinks = [...linkData.links];
             if (currentQuery) {
                 searchFilteredLinks = searchFilteredLinks.filter(link => {
-                    /* **********************************************************
-                     * FIX: Add (link.name || '') and (link.url || '') to
-                     * prevent .toLowerCase() on undefined.
-                     ***********************************************************/
                     const nameMatch = (link.name || '').toLowerCase().includes(currentQuery);
                     const urlMatch = (link.url || '').toLowerCase().includes(currentQuery);
                     return nameMatch || urlMatch;
