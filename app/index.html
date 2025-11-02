@@ -171,7 +171,8 @@
                     </button>
                 </div>
         
-                <div class="bg-yellow-800 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg mb-8" role="alert">
+                <!-- MODIFIED: Added id="popup-warning" and default "hidden" class -->
+                <div id="popup-warning" class="bg-yellow-800 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg mb-8 hidden" role="alert">
                     <p class="font-bold">Heads up!</p>
                     <p>Your browser's pop-up blocker will likely prevent the "Open All" button from working. Please **allow pop-ups** from this site for the feature to work correctly.</p>
                 </div>
@@ -330,9 +331,14 @@
             linkForm.reset();
         }
 
+        // === REMOVED Pop-up Checker ===
+        // The check on page load was unreliable.
+        // Logic is now inside handleOpenAllFiltered.
+        
         // === Event Listeners ===
         document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderLinks();
+            // checkPopupBlocker(); // <-- REMOVED THIS CALL
             
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
@@ -778,13 +784,29 @@
          * Handles click on the main "Open All Filtered" button
          */
         function handleOpenAllFiltered() {
+            const popupWarning = document.getElementById('popup-warning'); // Get warning element
             if (currentlyFilteredLinks && currentlyFilteredLinks.length > 0) {
                 console.log(`Opening ${currentlyFilteredLinks.length} filtered links...`);
+                let popupBlocked = false;
+                
                 currentlyFilteredLinks.forEach((link, i) => {
-                    window.open(link.url, '_blank');
+                    // Try to open a link
+                    const newWindow = window.open(link.url, '_blank', 'noopener,noreferrer');
+                    // Check if it failed (null, undefined, or blocked)
+                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                        popupBlocked = true;
+                    }
                 });
+
+                // After the loop, if any window failed, show the warning.
+                if (popupBlocked) {
+                    popupWarning.classList.remove('hidden');
+                } else {
+                    popupWarning.classList.add('hidden');
+                }
             } else {
                 console.warn('No filtered links to open.');
+                popupWarning.classList.add('hidden'); // Also hide if no links
             }
         }
 
@@ -843,5 +865,7 @@
     </script>
 </body>
 </html>
+
+
 
 
