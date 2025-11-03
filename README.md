@@ -1,19 +1,17 @@
 # Tabinator
 
-This project has been converted from a static Nginx site to a dynamic web application powered by a Node.js backend.
+This project provides a dynamic web application powered by a Node.js backend, designed to help you manage browser tabs by saving and organizing links.
 
-This allows the user interface (UI) to create, update, and delete entries in the `links.yaml` file.
+The user interface (UI) allows you to create, update, and delete entries, which are saved directly to the `links.yaml` file on the server.
 
 ## Architecture
 
-* **Frontend:** The `index.html` file remains the UI. It now uses JavaScript's `fetch` to talk to a local API instead of reading `links.yaml` directly.
+* **Frontend:** The `index.html` file provides the UI and uses JavaScript's `fetch` to communicate with the backend API.
 
-* **Backend:** A new `server.js` file (using Node.js and Express) runs a web server. This server is responsible for:
+* **Backend:** A `server.js` file (using Node.js and Express) runs a web server. This server is responsible for:
 
   1. Serving the `index.html` file.
-
   2. Providing an API for managing the links.
-
   3. Reading from and writing to the `links.yaml` file on the server.
 
 ## API Endpoints
@@ -21,21 +19,17 @@ This allows the user interface (UI) to create, update, and delete entries in the
 The `server.js` provides the following API:
 
 * `GET /api/data`: Reads `links.yaml`, parses it, and sends the full data as JSON.
-
 * `POST /api/links`: (Add) Receives a new link object in the request body, adds it to `links.yaml`, and saves the file.
-
 * `PUT /api/links`: (Edit) Receives an `originalUrl` and an `updatedLink` object. It finds the link by its original URL and replaces it with the new data, then saves.
-
 * `DELETE /api/links`: (Delete) Receives a `url` in the request body. It finds and removes the link with that URL, then saves.
 
 ## How to Run (with Docker)
 
-The easiest way to run this is with the updated `docker-compose.yml`:
+The easiest way to run this is with the included `docker-compose.yml`:
 
 ```
 # This will build the new Docker image and start the server
 docker-compose up --build
-
 ```
 
 Access the app at `http://localhost:8080`.
@@ -47,7 +41,6 @@ Access the app at `http://localhost:8080`.
 
    ```
    podman build -t tabinator .
-   
    ```
 
 2. **Run the Container:**
@@ -61,7 +54,6 @@ Access the app at `http://localhost:8080`.
      --restart unless-stopped \
      --security-opt no-new-privileges \
      tabinator
-   
    ```
 
 3. **Access:**
@@ -73,14 +65,12 @@ Access the app at `http://localhost:8080`.
 
    ```
    npm install
-   
    ```
 
 2. **Run the Server:**
 
    ```
    npm start
-   
    ```
 
 3. **Access:** Open `http://localhost:8080` in your browser.
