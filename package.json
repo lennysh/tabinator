@@ -1,7 +1,7 @@
 {
-  "name": "link-launcher-dynamic",
+  "name": "tabinator",
   "version": "1.0.0",
-  "description": "Dynamic backend for Link Launcher",
+  "description": "Dynamic backend for Tabinator",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

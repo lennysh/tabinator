@@ -3,7 +3,7 @@ services:
   web:
     # Build the image from the Dockerfile in the current directory
     build: .
-    container_name: link_launcher_dynamic
+    container_name: tabinator
     ports:
       - "8080:8080" # The Node.js server runs on port 8080
     volumes:

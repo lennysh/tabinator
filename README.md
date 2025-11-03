@@ -1,4 +1,4 @@
-# Link Launcher (Dynamic Version)
+# Tabinator
 
 This project has been converted from a static Nginx site to a dynamic web application powered by a Node.js backend.
 
@@ -46,7 +46,7 @@ Access the app at `http://localhost:8080`.
    From the root of the project (where the `Dockerfile` is), run:
 
    ```
-   podman build -t link-launcher-dynamic .
+   podman build -t tabinator .
    
    ```
 
@@ -55,12 +55,12 @@ Access the app at `http://localhost:8080`.
 
    ```
    podman run -d \
-     --name link_launcher_dynamic \
+     --name tabinator \
      -p 8080:8080 \
      -v ./app:/usr/src/app/app:Z \
      --restart unless-stopped \
      --security-opt no-new-privileges \
-     link-launcher-dynamic
+     tabinator
    
    ```
 

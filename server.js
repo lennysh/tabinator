@@ -168,7 +168,7 @@ app.get('/', (req, res) => {
 
 // --- Start Server ---
 app.listen(PORT, () => {
-    console.log(`Link Launcher server running at http://localhost:${PORT}`);
+    console.log(`Tabinator server running at http://localhost:${PORT}`);
     // Ensure the app directory and links.yaml file exist
     if (!fs.existsSync(path.join(__dirname, 'app'))) {
         fs.mkdirSync(path.join(__dirname, 'app'));
