@@ -13,6 +13,9 @@ RUN npm install
 # Copy the app source
 COPY . .
 
+# Create data directory for SQLite database
+RUN mkdir -p /usr/src/app/data
+
 # Expose port 8080
 EXPOSE 8080
 

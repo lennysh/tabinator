@@ -7,10 +7,14 @@ services:
     ports:
       - "8080:8080" # The Node.js server runs on port 8080
     volumes:
-      # Mount the 'app' directory to persist links.yaml changes
-      # This ensures that when the server writes to /usr/src/app/app/links.yaml,
-      # it's actually writing to the ./app/links.yaml file on your host machine.
+      # Mount the 'app' directory for static files
       - ./app:/usr/src/app/app
+      # Mount the 'data' directory to persist SQLite database
+      - ./data:/usr/src/app/data
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    environment:
+      # Set a secure session secret in production!
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
+      - NODE_ENV=production

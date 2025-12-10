@@ -142,7 +142,282 @@
     </div>
     <!-- End Confirmation Modal -->
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="login-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="login-modal-title">Login</h3>
+            <form id="login-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="login-username" class="block text-sm font-medium text-gray-300">Username or Email</label>
+                        <input type="text" id="login-username" required placeholder="Enter username or email" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="login-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="login-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button type="button" id="show-register-btn" class="text-blue-400 hover:text-blue-300 text-sm">Need an account? Register</button>
+                    <div class="flex gap-3">
+                        <button type="button" id="login-cancel-btn" class="btn btn-gray">Cancel</button>
+                        <button type="submit" id="login-submit-btn" class="btn btn-blue">Login</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Login Modal -->
 
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="register-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="register-modal-title">Register</h3>
+            <form id="register-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="register-username" class="block text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="register-username" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">3-50 characters, letters, numbers, underscores, and hyphens only</p>
+                    </div>
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-gray-300">Email</label>
+                        <input type="email" id="register-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="register-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">At least 8 characters with uppercase, lowercase, and number</p>
+                    </div>
+                    <div id="register-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button type="button" id="show-login-btn" class="text-blue-400 hover:text-blue-300 text-sm">Already have an account? Login</button>
+                    <div class="flex gap-3">
+                        <button type="button" id="register-cancel-btn" class="btn btn-gray">Cancel</button>
+                        <button type="submit" id="register-submit-btn" class="btn btn-green">Register</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Register Modal -->
+
+    <!-- Auth Status Bar -->
+    <div id="auth-bar" class="hidden bg-gray-800 border-b border-gray-700 p-4">
+        <div class="container max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <span class="text-gray-300">Logged in as: <strong id="auth-username" class="text-white"></strong></span>
+            </div>
+            <div class="flex gap-2">
+                <button id="admin-settings-btn" class="btn btn-blue text-sm">Settings</button>
+                <button id="logout-btn" class="btn btn-gray text-sm">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="change-password-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="change-password-modal-title">Change Password</h3>
+            <form id="change-password-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
+                        <input type="password" id="current-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="new-password" class="block text-sm font-medium text-gray-300">New Password</label>
+                        <input type="password" id="new-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">At least 8 characters with uppercase, lowercase, and number</p>
+                    </div>
+                    <div>
+                        <label for="confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                        <input type="password" id="confirm-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="change-password-error" class="hidden text-red-400 text-sm"></div>
+                    <div id="change-password-success" class="hidden text-green-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="change-password-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="change-password-submit-btn" class="btn btn-blue">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Change Password Modal -->
+
+    <!-- Settings Modal -->
+    <div id="admin-settings-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="admin-settings-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 600px;">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="admin-settings-modal-title">Settings</h3>
+            <form id="admin-settings-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="admin-username" class="block text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="admin-username" readonly class="mt-1 block w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-gray-400 cursor-not-allowed" />
+                        <p class="mt-1 text-xs text-gray-400">Username cannot be changed</p>
+                    </div>
+                    
+                    <div>
+                        <label for="admin-email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                        <input type="email" id="admin-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="mt-1 text-xs text-gray-400">You can use your email or username to login</p>
+                    </div>
+                    
+                    <div>
+                        <label for="admin-max-tabs" class="block text-sm font-medium text-gray-300">Max Tabs Open Limit</label>
+                        <input type="number" id="admin-max-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="mt-1 text-xs text-gray-400">Safety limit for opening multiple tabs at once (1-1000)</p>
+                    </div>
+                    
+                    <div class="border-t border-gray-600 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-300 mb-3">Export & Import</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <button type="button" id="export-links-btn" class="btn btn-green text-sm w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    Export Links to CSV
+                                </button>
+                                <p class="mt-1 text-xs text-gray-400">Download all your links as a CSV file</p>
+                            </div>
+                            <div>
+                                <label for="import-file-input" class="block text-sm font-medium text-gray-300 mb-2">Import Links from CSV</label>
+                                <input type="file" id="import-file-input" accept=".csv" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
+                                <button type="button" id="import-links-btn" class="btn btn-blue text-sm w-full mt-2" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                    Import Links
+                                </button>
+                                <p class="mt-1 text-xs text-gray-400">Merge CSV file with existing links (updates existing, adds new)</p>
+                                <div id="import-status" class="hidden mt-2 text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-600 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-300 mb-3">Change Password</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="admin-current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
+                                <input type="password" id="admin-current-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label for="admin-new-password" class="block text-sm font-medium text-gray-300">New Password</label>
+                                <input type="password" id="admin-new-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                <p class="mt-1 text-xs text-gray-400">Must be at least 8 characters with uppercase, lowercase, and a number</p>
+                            </div>
+                            <div>
+                                <label for="admin-confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                                <input type="password" id="admin-confirm-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <button type="button" id="admin-change-password-btn" class="btn btn-gray text-sm">Change Password</button>
+                            <div id="admin-password-error" class="hidden text-red-400 text-sm"></div>
+                            <div id="admin-password-success" class="hidden text-green-400 text-sm"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-settings-error" class="hidden text-red-400 text-sm"></div>
+                    <div id="admin-settings-success" class="hidden text-green-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="admin-settings-submit-btn" class="btn btn-blue">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Settings Modal -->
+
+    <!-- Groups Management Modal -->
+    <div id="groups-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="groups-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 1200px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium leading-6 text-white" id="groups-modal-title">Manage Groups</h3>
+                <button id="groups-modal-close-btn" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <button id="add-group-btn" class="btn btn-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Add New Group
+                </button>
+            </div>
+
+            <div id="groups-list" class="space-y-4">
+                <!-- Groups will be rendered here -->
+            </div>
+        </div>
+    </div>
+    <!-- End Groups Management Modal -->
+
+    <!-- Group Edit Modal -->
+    <div id="group-edit-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="group-edit-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="group-edit-modal-title">Edit Group</h3>
+            <form id="group-edit-form">
+                <input type="hidden" id="group-edit-id" />
+                <div class="space-y-4">
+                    <div>
+                        <label for="group-edit-name" class="block text-sm font-medium text-gray-300">Group Name</label>
+                        <input type="text" id="group-edit-name" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div class="mb-4 p-3 bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg">
+                        <p class="text-sm text-blue-200 font-medium mb-2">📋 How Group Logic Works:</p>
+                        <ul class="text-xs text-blue-100 space-y-1 ml-4 list-disc">
+                            <li><strong>Within each block:</strong> Tags <span class="text-yellow-300">OR</span> Names <span class="text-yellow-300">OR</span> URLs (if any field matches, the block matches)</li>
+                            <li><strong>Between Include blocks:</strong> Block 1 <span class="text-yellow-300">AND</span> Block 2 <span class="text-yellow-300">AND</span> Block 3... (all blocks must match)</li>
+                            <li><strong>Between Exclude blocks:</strong> Block 1 <span class="text-yellow-300">OR</span> Block 2 <span class="text-yellow-300">OR</span> Block 3... (if any block matches, exclude the link)</li>
+                            <li><strong>Include + Exclude:</strong> (All Include blocks match) <span class="text-yellow-300">AND NOT</span> (Any Exclude block matches)</li>
+                            <li><strong>Only Exclude blocks:</strong> Matches all links <span class="text-yellow-300">EXCEPT</span> those matching any exclude block</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                Include Rules
+                                <span class="text-xs text-gray-400 font-normal">(all blocks must match - AND logic)</span>
+                            </label>
+                            <div id="group-edit-include" class="space-y-2">
+                                <!-- Include blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-include-block-btn" class="mt-2 btn btn-gray text-sm">+ Add Include Block</button>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                Exclude Rules
+                                <span class="text-xs text-gray-400 font-normal">(any matching block excludes the link)</span>
+                            </label>
+                            <div id="group-edit-exclude" class="space-y-2">
+                                <!-- Exclude blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-exclude-block-btn" class="mt-2 btn btn-gray text-sm">+ Add Exclude Block</button>
+                        </div>
+                    </div>
+                    
+                    <div id="group-edit-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="group-edit-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="group-edit-submit-btn" class="btn btn-blue">Save Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Group Edit Modal -->
+
+    <!-- Main App Container (hidden until authenticated) -->
+    <div id="app-wrapper" class="hidden">
     <div class="container max-w-7xl mx-auto p-4 md:p-8">
         
         <header class="mb-8">
@@ -164,11 +439,19 @@
                 <div>
                     <label for="sort-select" class="block text-sm font-medium text-gray-400">Sort links by:</label>
                     <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
-                        <option value="custom">Custom Order (default)</option>
-                        <option value="az">A-Z (by name)</option>
+                        <option value="az">Name (A-Z)</option>
+                        <option value="za">Name (Z-A)</option>
+                        <option value="created-desc">Created (Newest First)</option>
+                        <option value="created-asc">Created (Oldest First)</option>
+                        <option value="updated-desc">Updated (Newest First)</option>
+                        <option value="updated-asc">Updated (Oldest First)</option>
                     </select>
                 </div>
-                <div class="admin-controls flex self-end">
+                <div class="admin-controls flex self-end gap-2">
+                    <button id="manage-groups-btn" class="btn btn-blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
+                        Manage Groups
+                    </button>
                     <button id="show-add-modal-btn" class="btn btn-green">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                         Add New Link
@@ -242,6 +525,7 @@
         </div> <!-- End 2-column grid -->
 
     </div>
+    </div> <!-- End app-wrapper -->
 
     <script>
         // Store the parsed data globally
@@ -255,11 +539,15 @@
         let allGroups = new Set(); // Will hold group *names*
         let activeGroups = new Set();
         
-        let currentSort = 'custom';
+        let currentSort = 'az';
         let currentQuery = '';
         
         let tagButtonElements = {};
         let groupButtonElements = {};
+
+        // === Authentication State ===
+        let isAuthenticated = false;
+        let currentUser = null;
 
         // === API Helper ===
         /**
@@ -273,6 +561,7 @@
             const options = {
                 method,
                 headers: {},
+                credentials: 'include' // Include cookies for session
             };
 
             if (body) {
@@ -283,8 +572,20 @@
             try {
                 const response = await fetch(endpoint, options);
                 
+                // Handle 401 Unauthorized
+                if (response.status === 401) {
+                    isAuthenticated = false;
+                    showLoginModal();
+                    throw new Error('Authentication required');
+                }
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({}));
+                    // Handle validation errors with details
+                    if (errorData.details && Array.isArray(errorData.details)) {
+                        const errorMessages = errorData.details.map(d => d.msg || d.message).join(', ');
+                        throw new Error(errorMessages || errorData.error || `Server error: ${response.status}`);
+                    }
                     throw new Error(errorData.error || `Server error: ${response.status}`);
                 }
                 
@@ -303,9 +604,544 @@
                 return { message: 'Operation successful.' }; // For other success codes like 204
             } catch (error) {
                 console.error(`API request failed: ${method} ${endpoint}`, error);
-                showGlobalError(error.message);
+                if (error.message !== 'Authentication required') {
+                    showGlobalError(error.message);
+                }
                 throw error; // Re-throw to stop promise chain
             }
+        }
+
+        // === Authentication Functions ===
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/me', { credentials: 'include' });
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    isAuthenticated = true;
+                    currentUser = data.user;
+                    showApp();
+                    // Load data after authentication is confirmed
+                    await loadAndRenderLinks();
+                } else {
+                    isAuthenticated = false;
+                    showLoginModal();
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                isAuthenticated = false;
+                showLoginModal();
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorEl.textContent = data.error || 'Login failed';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success
+                isAuthenticated = true;
+                currentUser = data.user;
+                hideLoginModal();
+                showApp();
+                await loadAndRenderLinks();
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const errorEl = document.getElementById('register-error');
+            const submitBtn = document.getElementById('register-submit-btn');
+
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Registration failed');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success - auto login
+                hideRegisterModal();
+                document.getElementById('login-username').value = username;
+                document.getElementById('login-password').value = password;
+                await handleLogin({ preventDefault: () => {} });
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            isAuthenticated = false;
+            currentUser = null;
+            showLoginModal();
+        }
+
+        function showChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('modal-hidden');
+            document.getElementById('change-password-modal').classList.add('modal-visible');
+            document.getElementById('change-password-form').reset();
+            document.getElementById('change-password-error').classList.add('hidden');
+            document.getElementById('change-password-success').classList.add('hidden');
+        }
+
+        function hideChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('modal-hidden');
+            document.getElementById('change-password-modal').classList.remove('modal-visible');
+        }
+
+        async function handleChangePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const errorEl = document.getElementById('change-password-error');
+            const successEl = document.getElementById('change-password-success');
+            const submitBtn = document.getElementById('change-password-submit-btn');
+
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            // Client-side validation
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'New passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                errorEl.textContent = 'New password must be at least 8 characters';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+            if (!passwordRegex.test(newPassword)) {
+                errorEl.textContent = 'New password must contain at least one uppercase letter, one lowercase letter, and one number';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Changing...';
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Failed to change password');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success
+                successEl.textContent = 'Password changed successfully!';
+                successEl.classList.remove('hidden');
+                document.getElementById('change-password-form').reset();
+                
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    hideChangePasswordModal();
+                }, 2000);
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Change Password';
+            }
+        }
+
+        async function showAdminSettingsModal() {
+            const modal = document.getElementById('admin-settings-modal');
+            const errorEl = document.getElementById('admin-settings-error');
+            const successEl = document.getElementById('admin-settings-success');
+            const passwordErrorEl = document.getElementById('admin-password-error');
+            const passwordSuccessEl = document.getElementById('admin-password-success');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            passwordErrorEl.classList.add('hidden');
+            passwordSuccessEl.classList.add('hidden');
+            
+            // Clear password fields
+            document.getElementById('admin-current-password').value = '';
+            document.getElementById('admin-new-password').value = '';
+            document.getElementById('admin-confirm-password').value = '';
+            
+            // Load current profile data
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load profile');
+                }
+                
+                const data = await response.json();
+                
+                document.getElementById('admin-username').value = data.user.username;
+                document.getElementById('admin-email').value = data.user.email || '';
+                document.getElementById('admin-max-tabs').value = data.config.max_tabs_open || 20;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                errorEl.textContent = 'Failed to load profile settings';
+                errorEl.classList.remove('hidden');
+            }
+            
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+        }
+
+        function hideAdminSettingsModal() {
+            document.getElementById('admin-settings-modal').classList.add('modal-hidden');
+            document.getElementById('admin-settings-modal').classList.remove('modal-visible');
+        }
+
+        async function handleAdminSettingsSubmit(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('admin-email').value.trim();
+            const maxTabs = parseInt(document.getElementById('admin-max-tabs').value, 10);
+            const errorEl = document.getElementById('admin-settings-error');
+            const successEl = document.getElementById('admin-settings-success');
+            const submitBtn = document.getElementById('admin-settings-submit-btn');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            // Validate
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                errorEl.textContent = 'Please enter a valid email address';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (isNaN(maxTabs) || maxTabs < 1 || maxTabs > 1000) {
+                errorEl.textContent = 'Max tabs must be between 1 and 1000';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                // Update email
+                const emailResponse = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email })
+                });
+                
+                if (!emailResponse.ok) {
+                    const emailData = await emailResponse.json();
+                    throw new Error(emailData.error || 'Failed to update email');
+                }
+                
+                // Update config
+                const configResponse = await fetch('/api/auth/config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ max_tabs_open: maxTabs })
+                });
+                
+                if (!configResponse.ok) {
+                    const configData = await configResponse.json();
+                    throw new Error(configData.error || 'Failed to update config');
+                }
+                
+                // Success
+                successEl.textContent = 'Settings saved successfully!';
+                successEl.classList.remove('hidden');
+                
+                // Reload links to update maxTabsOpen
+                await loadAndRenderLinks();
+                
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    hideAdminSettingsModal();
+                }, 2000);
+            } catch (error) {
+                errorEl.textContent = error.message || 'Failed to save settings';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Settings';
+            }
+        }
+
+        async function handleAdminChangePassword() {
+            const currentPassword = document.getElementById('admin-current-password').value;
+            const newPassword = document.getElementById('admin-new-password').value;
+            const confirmPassword = document.getElementById('admin-confirm-password').value;
+            const errorEl = document.getElementById('admin-password-error');
+            const successEl = document.getElementById('admin-password-success');
+            const submitBtn = document.getElementById('admin-change-password-btn');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            // Validate
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                errorEl.textContent = 'All password fields are required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'New passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+            if (newPassword.length < 8 || !passwordRegex.test(newPassword)) {
+                errorEl.textContent = 'Password must be at least 8 characters with uppercase, lowercase, and a number';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Changing...';
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Failed to change password');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                // Success
+                successEl.textContent = 'Password changed successfully!';
+                successEl.classList.remove('hidden');
+                document.getElementById('admin-current-password').value = '';
+                document.getElementById('admin-new-password').value = '';
+                document.getElementById('admin-confirm-password').value = '';
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Change Password';
+            }
+        }
+
+        async function handleExportLinks() {
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to export links');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tabinator-export-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export links. Please try again.');
+            }
+        }
+
+        async function handleImportLinks() {
+            const fileInput = document.getElementById('import-file-input');
+            const importBtn = document.getElementById('import-links-btn');
+            const statusEl = document.getElementById('import-status');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                statusEl.textContent = 'Please select a CSV file';
+                statusEl.className = 'mt-2 text-sm text-red-400';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+                try {
+                    const csvData = e.target.result;
+                    
+                    importBtn.disabled = true;
+                    importBtn.textContent = 'Importing...';
+                    statusEl.textContent = 'Importing links...';
+                    statusEl.className = 'mt-2 text-sm text-blue-400';
+                    statusEl.classList.remove('hidden');
+                    
+                    const response = await fetch('/api/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ csvData })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Import failed');
+                    }
+                    
+                    // Show success message
+                    let message = `Import completed: ${data.imported} new, ${data.updated} updated`;
+                    if (data.skipped > 0) {
+                        message += `, ${data.skipped} skipped`;
+                    }
+                    if (data.errors && data.errors.length > 0) {
+                        message += `\nErrors: ${data.errors.length}`;
+                        console.warn('Import errors:', data.errors);
+                    }
+                    
+                    statusEl.textContent = message;
+                    statusEl.className = 'mt-2 text-sm text-green-400';
+                    
+                    // Clear file input
+                    fileInput.value = '';
+                    importBtn.disabled = true;
+                    
+                    // Reload links
+                    await loadAndRenderLinks();
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        importBtn.textContent = 'Import Links';
+                        statusEl.classList.add('hidden');
+                    }, 3000);
+                } catch (error) {
+                    console.error('Import error:', error);
+                    statusEl.textContent = `Import failed: ${error.message}`;
+                    statusEl.className = 'mt-2 text-sm text-red-400';
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import Links';
+                }
+            };
+            
+            reader.onerror = () => {
+                statusEl.textContent = 'Failed to read file';
+                statusEl.className = 'mt-2 text-sm text-red-400';
+                statusEl.classList.remove('hidden');
+                importBtn.disabled = false;
+                importBtn.textContent = 'Import Links';
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function showLoginModal() {
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('auth-bar').classList.add('hidden');
+            document.getElementById('login-modal').classList.remove('modal-hidden');
+            document.getElementById('login-modal').classList.add('modal-visible');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('login-modal').classList.add('modal-hidden');
+            document.getElementById('login-modal').classList.remove('modal-visible');
+        }
+
+        function showRegisterModal() {
+            hideLoginModal();
+            document.getElementById('register-modal').classList.remove('modal-hidden');
+            document.getElementById('register-modal').classList.add('modal-visible');
+        }
+
+        function hideRegisterModal() {
+            document.getElementById('register-modal').classList.add('modal-hidden');
+            document.getElementById('register-modal').classList.remove('modal-visible');
+        }
+
+        function showApp() {
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.getElementById('auth-bar').classList.remove('hidden');
+            if (currentUser) {
+                document.getElementById('auth-username').textContent = currentUser.username;
+            }
+            hideLoginModal();
+            hideRegisterModal();
         }
 
         /**
@@ -411,8 +1247,69 @@
         
         // === Event Listeners ===
         document.addEventListener('DOMContentLoaded', () => {
-            loadAndRenderLinks();
+            // Check authentication status first
+            checkAuthStatus();
+
+            // Auth modal listeners
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+            document.getElementById('login-cancel-btn').addEventListener('click', () => {
+                if (!isAuthenticated) {
+                    // Can't cancel if not authenticated
+                    return;
+                }
+                hideLoginModal();
+            });
+            document.getElementById('register-cancel-btn').addEventListener('click', () => {
+                hideRegisterModal();
+                showLoginModal();
+            });
+            document.getElementById('show-register-btn').addEventListener('click', showRegisterModal);
+            document.getElementById('show-login-btn').addEventListener('click', () => {
+                hideRegisterModal();
+                showLoginModal();
+            });
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
             
+            // Admin Settings
+            const adminSettingsBtn = document.getElementById('admin-settings-btn');
+            const adminSettingsForm = document.getElementById('admin-settings-form');
+            const adminSettingsCancelBtn = document.getElementById('admin-settings-cancel-btn');
+            const adminChangePasswordBtn = document.getElementById('admin-change-password-btn');
+            
+            if (adminSettingsBtn) {
+                adminSettingsBtn.addEventListener('click', showAdminSettingsModal);
+            }
+            if (adminSettingsForm) {
+                adminSettingsForm.addEventListener('submit', handleAdminSettingsSubmit);
+            }
+            if (adminSettingsCancelBtn) {
+                adminSettingsCancelBtn.addEventListener('click', hideAdminSettingsModal);
+            }
+            if (adminChangePasswordBtn) {
+                adminChangePasswordBtn.addEventListener('click', handleAdminChangePassword);
+            }
+            
+            // Export/Import
+            const exportLinksBtn = document.getElementById('export-links-btn');
+            const importFileInput = document.getElementById('import-file-input');
+            const importLinksBtn = document.getElementById('import-links-btn');
+            
+            if (exportLinksBtn) {
+                exportLinksBtn.addEventListener('click', handleExportLinks);
+            }
+            if (importFileInput) {
+                importFileInput.addEventListener('change', (e) => {
+                    if (importLinksBtn) {
+                        importLinksBtn.disabled = !e.target.files || e.target.files.length === 0;
+                    }
+                });
+            }
+            if (importLinksBtn) {
+                importLinksBtn.addEventListener('click', handleImportLinks);
+            }
+            
+            // App listeners (only work when authenticated)
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
             document.getElementById('group-pills-container').addEventListener('click', handleGroupClick);
@@ -423,6 +1320,67 @@
             });
             modalCancelBtn.addEventListener('click', hideModal);
             linkForm.addEventListener('submit', handleFormSubmit);
+
+            // Groups management listeners
+            const manageGroupsBtn = document.getElementById('manage-groups-btn');
+            const groupsModalCloseBtn = document.getElementById('groups-modal-close-btn');
+            const addGroupBtn = document.getElementById('add-group-btn');
+            const groupEditForm = document.getElementById('group-edit-form');
+            const groupEditCancelBtn = document.getElementById('group-edit-cancel-btn');
+            const addIncludeBlockBtn = document.getElementById('add-include-block-btn');
+            const addExcludeBlockBtn = document.getElementById('add-exclude-block-btn');
+            
+            if (manageGroupsBtn) {
+                manageGroupsBtn.addEventListener('click', showGroupsModal);
+            }
+            if (groupsModalCloseBtn) {
+                groupsModalCloseBtn.addEventListener('click', hideGroupsModal);
+            }
+            if (addGroupBtn) {
+                addGroupBtn.addEventListener('click', () => showGroupEditModal());
+            }
+            if (groupEditForm) {
+                groupEditForm.addEventListener('submit', handleGroupFormSubmit);
+            }
+            if (groupEditCancelBtn) {
+                groupEditCancelBtn.addEventListener('click', hideGroupEditModal);
+            }
+            if (addIncludeBlockBtn) {
+                addIncludeBlockBtn.addEventListener('click', () => addGroupRuleBlock('group-edit-include'));
+            }
+            if (addExcludeBlockBtn) {
+                addExcludeBlockBtn.addEventListener('click', () => addGroupRuleBlock('group-edit-exclude'));
+            }
+            
+            // Delegated listeners for groups list
+            const groupsListContainer = document.getElementById('groups-list');
+            if (groupsListContainer) {
+                groupsListContainer.addEventListener('click', async (e) => {
+                    const editBtn = e.target.closest('.edit-group-btn');
+                    if (editBtn) {
+                        const groupId = parseInt(editBtn.dataset.groupId);
+                        // Fetch fresh group data from API
+                        try {
+                            const groups = await apiRequest('/api/groups', 'GET');
+                            const group = groups.find(g => g.id === groupId);
+                            if (group) {
+                                showGroupEditModal(group);
+                            } else {
+                                showGlobalError('Group not found');
+                            }
+                        } catch (error) {
+                            console.error('Error loading group:', error);
+                            showGlobalError('Failed to load group');
+                        }
+                    }
+                    
+                    const deleteBtn = e.target.closest('.delete-group-btn');
+                    if (deleteBtn) {
+                        const groupId = parseInt(deleteBtn.dataset.groupId);
+                        handleDeleteGroup(groupId);
+                    }
+                });
+            }
 
             // Listener for dynamic Edit/Delete buttons
             document.getElementById('app-container').addEventListener('click', (e) => {
@@ -453,20 +1411,45 @@
             const errorMsgEl = document.getElementById('error-message');
             const appEl = document.getElementById('app-container');
 
+            // Show loading state
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            appEl.classList.add('hidden');
+
             const searchInput = document.getElementById('search-bar');
             const sortSelect = document.getElementById('sort-select');
 
             // Restore saved values from localStorage
             currentQuery = localStorage.getItem('tabinatorQuery') || '';
-            currentSort = localStorage.getItem('tabinatorSort') || 'custom';
+            const savedSort = localStorage.getItem('tabinatorSort');
+            // Migrate 'custom' to 'az' (default)
+            currentSort = savedSort === 'custom' ? 'az' : (savedSort || 'az');
+            if (savedSort === 'custom') {
+                localStorage.setItem('tabinatorSort', 'az');
+            }
             activeTags = new Set(JSON.parse(localStorage.getItem('tabinatorTags') || '[]'));
             activeGroups = new Set(JSON.parse(localStorage.getItem('tabinatorGroups') || '[]'));
 
             // Apply restored values to inputs
-            searchInput.value = currentQuery;
-            sortSelect.value = currentSort;
+            if (searchInput) searchInput.value = currentQuery;
+            if (sortSelect) sortSelect.value = currentSort;
 
             try {
+                // Check authentication first
+                if (!isAuthenticated) {
+                    // Try to check auth status
+                    const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
+                    const authData = await authResponse.json();
+                    if (!authData.authenticated) {
+                        loadingEl.classList.add('hidden');
+                        showLoginModal();
+                        return;
+                    }
+                    isAuthenticated = true;
+                    currentUser = authData.user;
+                    showApp(); // Make sure app is shown if we just authenticated
+                }
+
                 // 1. Fetch the data from the API
                 linkData = await apiRequest('/api/data', 'GET');
 
@@ -508,19 +1491,41 @@
                 renderApp(); 
 
                 // 6. Update UI state
-                appEl.classList.remove('hidden'); // This is now the <main> element
+                loadingEl.classList.add('hidden'); // Hide loading
+                errorEl.classList.add('hidden'); // Hide any previous errors
+                appEl.classList.remove('hidden'); // Show the main content
 
-                // 7. Add event listeners
-                searchInput.addEventListener('input', handleSearch);
-                sortSelect.addEventListener('change', handleSort);
+                // 7. Add event listeners (use one-time flag to avoid duplicates)
+                // Get fresh references after potential DOM updates
+                const finalSearchInput = document.getElementById('search-bar');
+                const finalSortSelect = document.getElementById('sort-select');
+                
+                // Remove existing listeners by cloning
+                if (finalSearchInput) {
+                    const newSearchInput = finalSearchInput.cloneNode(true);
+                    finalSearchInput.parentNode.replaceChild(newSearchInput, finalSearchInput);
+                    newSearchInput.value = currentQuery;
+                    newSearchInput.addEventListener('input', handleSearch);
+                }
+                
+                if (finalSortSelect) {
+                    const newSortSelect = finalSortSelect.cloneNode(true);
+                    finalSortSelect.parentNode.replaceChild(newSortSelect, finalSortSelect);
+                    newSortSelect.value = currentSort;
+                    newSortSelect.addEventListener('change', handleSort);
+                }
 
             } catch (error) {
                 console.error("Error loading links:", error);
+                loadingEl.classList.add('hidden');
                 errorMsgEl.textContent = error.message;
                 errorEl.classList.remove('hidden');
-            } finally {
-                // NEW: This will ALWAYS run, ensuring the spinner is hidden
-                loadingEl.classList.add('hidden');
+                
+                // If it's an auth error, show login modal
+                if (error.message === 'Authentication required' || error.message.includes('401')) {
+                    isAuthenticated = false;
+                    showLoginModal();
+                }
             }
         }
         
@@ -610,7 +1615,8 @@
                 } else if (isAvailable) {
                     button.className = 'tag-btn tag-btn-inactive';
                 } else {
-                    button.className = 'tag-btn tag-btn-hidden';
+                    // Show all groups, even if they have no matches (grayed out style)
+                    button.className = 'tag-btn tag-btn-inactive opacity-50';
                 }
             }
         }
@@ -629,23 +1635,38 @@
 
         function linkMatchesGroup(link, groupDef) {
             const includeBlocks = groupDef.include || [];
-            const allIncludesMatch = includeBlocks.every(block => {
-                return checkList(block.tags, 'tags', link) ||
-                       checkList(block.names, 'name', link) ||
-                       checkList(block.urls, 'url', link);
-            });
-
-            if (!allIncludesMatch) return false;
-
             const excludeBlocks = groupDef.exclude || [];
-            const anyExcludeMatches = excludeBlocks.some(block => {
-                return checkList(block.tags, 'tags', link) ||
-                       checkList(block.names, 'name', link) ||
-                       checkList(block.urls, 'url', link);
-            });
-
-            if (anyExcludeMatches) return false;
             
+            // If no include blocks and no exclude blocks, don't match anything
+            if (includeBlocks.length === 0 && excludeBlocks.length === 0) {
+                return false;
+            }
+            
+            // Check exclude blocks first (if any exclude matches, link is excluded)
+            if (excludeBlocks.length > 0) {
+                const anyExcludeMatches = excludeBlocks.some(block => {
+                    return checkList(block.tags, 'tags', link) ||
+                           checkList(block.names, 'name', link) ||
+                           checkList(block.urls, 'url', link);
+                });
+                
+                if (anyExcludeMatches) return false;
+            }
+            
+            // If there are include blocks, ALL blocks must match (AND logic between blocks)
+            if (includeBlocks.length > 0) {
+                const allIncludeMatches = includeBlocks.every(block => {
+                    return checkList(block.tags, 'tags', link) ||
+                           checkList(block.names, 'name', link) ||
+                           checkList(block.urls, 'url', link);
+                });
+                
+                if (!allIncludeMatches) return false;
+            }
+            
+            // If we get here:
+            // - Either there are include blocks and at least one matched, OR there are no include blocks
+            // - AND no exclude blocks matched (or there are no exclude blocks)
             return true;
         }
 
@@ -690,7 +1711,7 @@
                 });
             }
             
-            // 4. Calculate available tags and groups
+            // 4. Calculate available groups from tag-filtered links
             const availableGroups = new Set();
             const allGroupDefs = linkData.groups || [];
             tagsFilteredLinks.forEach(link => {
@@ -702,33 +1723,136 @@
                 });
             });
 
-            let groupsFilteredLinks = [...searchFilteredLinks];
+            // 5. Calculate available tags
+            // Available tags = tags that appear in links matching: search + groups + active tags
+            // For each tag, check if it appears in links that match all current filters
+            const availableTags = new Set();
+            
+            // Start with search-filtered links
+            let baseForTags = [...searchFilteredLinks];
+            
+            // Apply group filtering if groups are active
             if (activeGroups.size > 0) {
-                 const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
-                 groupsFilteredLinks = searchFilteredLinks.filter(link => {
+                const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
+                baseForTags = baseForTags.filter(link => {
                     return activeGroupDefs.some(groupDef => linkMatchesGroup(link, groupDef));
                 });
             }
-
-            const availableTags = new Set();
-            groupsFilteredLinks.forEach(link => {
-                link.tags?.forEach(tag => availableTags.add(tag));
-            });
             
-            // 5. Update the tag and group pill UI
+            // For each tag, check if it appears in links matching the current active tags
+            // (or all links if no tags are active)
+            for (const tag of allTags) {
+                let linksToCheck = [...baseForTags];
+                
+                // If there are active tags, filter by them (excluding the tag we're checking)
+                if (activeTags.size > 0) {
+                    const otherActiveTags = Array.from(activeTags).filter(t => t !== tag);
+                    if (otherActiveTags.length > 0) {
+                        linksToCheck = linksToCheck.filter(link => {
+                            if (!link.tags || !Array.isArray(link.tags)) return false;
+                            return otherActiveTags.every(activeTag => link.tags.includes(activeTag));
+                        });
+                    }
+                }
+                
+                // Check if this tag appears in any of the filtered links
+                const tagAppears = linksToCheck.some(link => 
+                    link.tags && Array.isArray(link.tags) && link.tags.includes(tag)
+                );
+                
+                if (tagAppears) {
+                    availableTags.add(tag);
+                }
+            }
+            
+            // 5. Auto-clear filters that result in zero matches
+            // Use the availableTags and availableGroups we calculated to determine what to clear
+            if (finalFilteredLinks.length === 0 && (activeTags.size > 0 || activeGroups.size > 0)) {
+                let filtersCleared = false;
+                
+                // Remove tags that are no longer available (don't match any links)
+                activeTags.forEach(tag => {
+                    if (!availableTags.has(tag)) {
+                        activeTags.delete(tag);
+                        filtersCleared = true;
+                    }
+                });
+                
+                // Remove groups that are no longer available (don't match any links)
+                activeGroups.forEach(groupName => {
+                    if (!availableGroups.has(groupName)) {
+                        activeGroups.delete(groupName);
+                        filtersCleared = true;
+                    }
+                });
+                
+                // Save cleared filters to localStorage and re-render
+                if (filtersCleared) {
+                    localStorage.setItem('tabinatorTags', JSON.stringify(Array.from(activeTags)));
+                    localStorage.setItem('tabinatorGroups', JSON.stringify(Array.from(activeGroups)));
+                    
+                    // Re-render with cleared filters
+                    renderApp();
+                    return; // Exit early since we're re-rendering
+                }
+            }
+
+            // 6. Update the tag and group pill UI
             updateTagPills(availableTags);
             updateGroupPills(availableGroups);
 
-            // 6. Sort the filtered links
+            // 7. Sort the filtered links
             let sortedLinks = [...finalFilteredLinks];
-            if (currentSort === 'az') {
-                sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            switch (currentSort) {
+                case 'az':
+                    // Name (A-Z)
+                    sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    break;
+                case 'za':
+                    // Name (Z-A)
+                    sortedLinks.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+                    break;
+                case 'created-desc':
+                    // Created (Newest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return dateB - dateA;
+                    });
+                    break;
+                case 'created-asc':
+                    // Created (Oldest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return dateA - dateB;
+                    });
+                    break;
+                case 'updated-desc':
+                    // Updated (Newest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+                        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+                        return dateB - dateA;
+                    });
+                    break;
+                case 'updated-asc':
+                    // Updated (Oldest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+                        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+                        return dateA - dateB;
+                    });
+                    break;
+                default:
+                    // Default to A-Z if unknown sort option
+                    sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             }
             
-            // 7. Store the filtered links for the "Open All" button
+            // 8. Store the filtered links for the "Open All" button
             currentlyFilteredLinks = sortedLinks;
             
-            // 8. Render the final list
+            // 9. Render the final list
             if (sortedLinks.length > 0) {
                 renderLinkList(sortedLinks);
                 noResultsEl.classList.add('hidden');
@@ -738,7 +1862,7 @@
                 appEl.classList.add('hidden'); // Hide the <main> element
             }
             
-            // 9. Update the "Open All" button text
+            // 10. Update the "Open All" button text
             const openAllBtn = document.getElementById('open-all-filtered-btn');
             const linkCount = currentlyFilteredLinks.length;
             openAllBtn.textContent = `Open All Filtered Links (${linkCount})`;
@@ -936,15 +2060,27 @@
             const originalUrl = formOriginalUrl.value;
             
             const link = {
-                name: formName.value,
-                url: formUrl.value,
+                name: formName.value.trim(),
+                url: formUrl.value.trim(),
                 tags: formTags.value.split(',')
                                  .map(tag => tag.trim())
                                  .filter(tag => tag.length > 0)
             };
             
+            // Basic client-side validation
+            if (!link.name || link.name.length === 0) {
+                showGlobalError('Name is required');
+                return;
+            }
+            if (!link.url || link.url.length === 0) {
+                showGlobalError('URL is required');
+                return;
+            }
+            
             // Disable button
-            document.getElementById('modal-save-btn').disabled = true;
+            const saveBtn = document.getElementById('modal-save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
 
             try {
                 if (originalUrl) {
@@ -960,9 +2096,11 @@
             } catch (error) {
                 // Error is already shown by apiRequest helper
                 console.error("Failed to save link:", error);
+                // Don't hide modal on error so user can fix it
             } finally {
                 // Re-enable button
-                document.getElementById('modal-save-btn').disabled = false;
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
             }
         }
 
@@ -992,6 +2130,378 @@
                 console.error("Failed to delete link:", error);
             }
         }
+
+        // === Groups Management ===
+        let groupsList = [];
+
+        async function loadGroups() {
+            try {
+                groupsList = await apiRequest('/api/groups', 'GET');
+                renderGroupsList();
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                showGlobalError('Failed to load groups');
+            }
+        }
+
+        function renderGroupsList() {
+            const container = document.getElementById('groups-list');
+            if (!container) return;
+
+            if (groupsList.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-8">No groups defined. Click "Add New Group" to create one.</p>';
+                return;
+            }
+
+            container.innerHTML = groupsList.map(group => {
+                const includeRules = formatGroupRules(group.include || []);
+                const excludeRules = formatGroupRules(group.exclude || []);
+                
+                return `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="text-lg font-semibold text-white">${group.name}</h4>
+                            <div class="flex gap-2">
+                                <button class="edit-group-btn btn-link" data-group-id="${group.id}" title="Edit Group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="delete-group-btn btn-link text-red-400 hover:text-red-300" data-group-id="${group.id}" title="Delete Group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <div class="text-gray-400 font-medium mb-1">Include:</div>
+                                <div class="text-gray-300">${includeRules || '<span class="text-gray-500">None</span>'}</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-400 font-medium mb-1">Exclude:</div>
+                                <div class="text-gray-300">${excludeRules || '<span class="text-gray-500">None</span>'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatGroupRules(rules) {
+            if (!rules || rules.length === 0) return '';
+            return rules.map(block => {
+                const parts = [];
+                if (block.tags && block.tags.length > 0) {
+                    parts.push(`Tags: ${block.tags.join(', ')}`);
+                }
+                if (block.names && block.names.length > 0) {
+                    parts.push(`Names: ${block.names.join(', ')}`);
+                }
+                if (block.urls && block.urls.length > 0) {
+                    parts.push(`URLs: ${block.urls.join(', ')}`);
+                }
+                return parts.join('; ');
+            }).join(' | ');
+        }
+
+        function showGroupsModal() {
+            document.getElementById('groups-modal').classList.remove('modal-hidden');
+            document.getElementById('groups-modal').classList.add('modal-visible');
+            loadGroups();
+        }
+
+        function hideGroupsModal() {
+            document.getElementById('groups-modal').classList.add('modal-hidden');
+            document.getElementById('groups-modal').classList.remove('modal-visible');
+        }
+
+        function showGroupEditModal(group = null) {
+            const modal = document.getElementById('group-edit-modal');
+            const form = document.getElementById('group-edit-form');
+            const errorEl = document.getElementById('group-edit-error');
+            
+            errorEl.classList.add('hidden');
+            form.reset();
+            
+            if (group) {
+                document.getElementById('group-edit-id').value = group.id;
+                document.getElementById('group-edit-name').value = group.name;
+                renderGroupRules('group-edit-include', group.include || []);
+                renderGroupRules('group-edit-exclude', group.exclude || []);
+                document.getElementById('group-edit-modal-title').textContent = 'Edit Group';
+            } else {
+                document.getElementById('group-edit-id').value = '';
+                document.getElementById('group-edit-name').value = '';
+                document.getElementById('group-edit-include').innerHTML = '';
+                document.getElementById('group-edit-exclude').innerHTML = '';
+                document.getElementById('group-edit-modal-title').textContent = 'Add New Group';
+            }
+            
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+        }
+
+        function hideGroupEditModal() {
+            document.getElementById('group-edit-modal').classList.add('modal-hidden');
+            document.getElementById('group-edit-modal').classList.remove('modal-visible');
+        }
+
+        function renderGroupRules(containerId, rules) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (rules.length === 0) {
+                return;
+            }
+            
+            rules.forEach((block, blockIndex) => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
+                blockDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-xs font-medium text-gray-300">Block ${blockIndex + 1}</span>
+                            <span class="text-xs text-gray-500 ml-2">(Tags OR Names OR URLs)</span>
+                        </div>
+                        <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="text-xs text-gray-400">Tags (comma-separated):</label>
+                            <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.tags || []).join(', ')}" placeholder="tag1, tag2">
+                        </div>
+                        <div class="text-center text-xs text-gray-600">OR</div>
+                        <div>
+                            <label class="text-xs text-gray-400">Names (comma-separated):</label>
+                            <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.names || []).join(', ')}" placeholder="name1, name2">
+                        </div>
+                        <div class="text-center text-xs text-gray-600">OR</div>
+                        <div>
+                            <label class="text-xs text-gray-400">URLs (comma-separated):</label>
+                            <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.urls || []).join(', ')}" placeholder="url1, url2">
+                        </div>
+                    </div>
+                `;
+                
+                blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
+                    blockDiv.remove();
+                    // Re-number blocks after removal
+                    updateBlockNumbers(containerId);
+                });
+                
+                container.appendChild(blockDiv);
+                
+                // Add separator between blocks (but not after the last one)
+                if (blockIndex < rules.length - 1) {
+                    const separatorDiv = document.createElement('div');
+                    // Determine if this is include or exclude section
+                    const isInclude = containerId.includes('include');
+                    separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                    separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                    separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                    container.appendChild(separatorDiv);
+                }
+            });
+        }
+
+        function addGroupRuleBlock(containerId) {
+            const container = document.getElementById(containerId);
+            const existingBlocks = container.querySelectorAll('.bg-gray-800');
+            const blockIndex = existingBlocks.length;
+            
+            // Add separator before new block if there are existing blocks
+            if (existingBlocks.length > 0) {
+                const separatorDiv = document.createElement('div');
+                // Determine if this is include or exclude section
+                const isInclude = containerId.includes('include');
+                separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                container.appendChild(separatorDiv);
+            }
+            
+            const blockDiv = document.createElement('div');
+            blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
+            blockDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="text-xs font-medium text-gray-300">Block ${blockIndex + 1}</span>
+                        <span class="text-xs text-gray-500 ml-2">(Tags OR Names OR URLs)</span>
+                    </div>
+                    <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs text-gray-400">Tags (comma-separated):</label>
+                        <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="tag1, tag2">
+                    </div>
+                    <div class="text-center text-xs text-gray-600">OR</div>
+                    <div>
+                        <label class="text-xs text-gray-400">Names (comma-separated):</label>
+                        <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="name1, name2">
+                    </div>
+                    <div class="text-center text-xs text-gray-600">OR</div>
+                    <div>
+                        <label class="text-xs text-gray-400">URLs (comma-separated):</label>
+                        <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="url1, url2">
+                    </div>
+                </div>
+            `;
+            
+            blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
+                // Remove the block and any separator before it
+                const prevSibling = blockDiv.previousElementSibling;
+                if (prevSibling && (prevSibling.textContent.trim() === 'OR' || prevSibling.textContent.trim() === 'AND')) {
+                    prevSibling.remove();
+                }
+                blockDiv.remove();
+                // Re-number blocks after removal
+                updateBlockNumbers(containerId);
+            });
+            
+            container.appendChild(blockDiv);
+            // Update block numbers after adding
+            updateBlockNumbers(containerId);
+        }
+        
+        function updateBlockNumbers(containerId) {
+            const container = document.getElementById(containerId);
+            const blocks = container.querySelectorAll('.bg-gray-800');
+            
+            // Remove all existing separators (both AND and OR)
+            const separators = container.querySelectorAll('.text-center.text-xs.my-2.font-bold');
+            separators.forEach(sep => sep.remove());
+            
+            // Determine if this is include or exclude section
+            const isInclude = containerId.includes('include');
+            
+            // Re-number blocks and add separators between them
+            blocks.forEach((block, index) => {
+                const header = block.querySelector('.flex.justify-between');
+                if (header) {
+                    const blockNumSpan = header.querySelector('span.text-xs.font-medium');
+                    if (blockNumSpan) {
+                        blockNumSpan.textContent = `Block ${index + 1}`;
+                    }
+                }
+                
+                // Add separator after this block (but not after the last one)
+                if (index < blocks.length - 1) {
+                    const separatorDiv = document.createElement('div');
+                    separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                    separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                    separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                    // Insert after the current block
+                    if (block.nextSibling) {
+                        container.insertBefore(separatorDiv, block.nextSibling);
+                    } else {
+                        container.appendChild(separatorDiv);
+                    }
+                }
+            });
+        }
+
+        function collectGroupRules(containerId) {
+            const container = document.getElementById(containerId);
+            const blocks = container.querySelectorAll('.bg-gray-800');
+            const rules = [];
+            
+            blocks.forEach(block => {
+                const tagsInput = block.querySelector('.block-rule-tags').value.trim();
+                const namesInput = block.querySelector('.block-rule-names').value.trim();
+                const urlsInput = block.querySelector('.block-rule-urls').value.trim();
+                
+                const blockData = {};
+                if (tagsInput) {
+                    blockData.tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+                }
+                if (namesInput) {
+                    blockData.names = namesInput.split(',').map(n => n.trim()).filter(n => n);
+                }
+                if (urlsInput) {
+                    blockData.urls = urlsInput.split(',').map(u => u.trim()).filter(u => u);
+                }
+                
+                // Only add block if it has at least one rule
+                if (Object.keys(blockData).length > 0) {
+                    rules.push(blockData);
+                }
+            });
+            
+            return rules;
+        }
+
+        async function handleGroupFormSubmit(e) {
+            e.preventDefault();
+            const groupId = document.getElementById('group-edit-id').value;
+            const name = document.getElementById('group-edit-name').value.trim();
+            const errorEl = document.getElementById('group-edit-error');
+            const submitBtn = document.getElementById('group-edit-submit-btn');
+            
+            errorEl.classList.add('hidden');
+            
+            if (!name) {
+                errorEl.textContent = 'Group name is required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const include = collectGroupRules('group-edit-include');
+            const exclude = collectGroupRules('group-edit-exclude');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                if (groupId) {
+                    // Update
+                    await apiRequest(`/api/groups/${groupId}`, 'PUT', { name, include, exclude });
+                } else {
+                    // Create
+                    await apiRequest('/api/groups', 'POST', { name, include, exclude });
+                }
+                
+                hideGroupEditModal();
+                await loadGroups();
+                await loadAndRenderLinks(); // Reload to update groups in main view
+            } catch (error) {
+                errorEl.textContent = error.message || 'Failed to save group';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Group';
+            }
+        }
+
+        async function handleDeleteGroup(groupId) {
+            const group = groupsList.find(g => g.id == groupId);
+            const groupName = group ? group.name : 'this group';
+            
+            const confirmed = await showConfirmation(
+                'Delete Group?',
+                `Are you sure you want to delete the group "<strong class="text-white">${groupName}</strong>"?<br><br>This action cannot be undone.`,
+                'Delete',
+                'btn-red'
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            try {
+                await apiRequest(`/api/groups/${groupId}`, 'DELETE');
+                await loadGroups();
+                await loadAndRenderLinks(); // Reload to update groups in main view
+            } catch (error) {
+                console.error('Failed to delete group:', error);
+                showGlobalError('Failed to delete group');
+            }
+        }
+
 
     </script>
 </body>
