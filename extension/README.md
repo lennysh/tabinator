@@ -26,9 +26,19 @@ A browser extension for quickly adding links to your Tabinator dashboard.
 
 1. Navigate to any webpage you want to save
 2. Click the Tabinator extension icon in your toolbar
-3. The popup will pre-fill the current page URL and title
-4. Add tags (comma-separated) if desired
-5. Click "Add Link" to save it to your Tabinator dashboard
+   - **Icon Badge**: A green checkmark (✓) appears on the icon if the current page is already saved in Tabinator
+3. The popup will:
+   - **For new links**: Pre-fill the current page URL and title, ready to add
+   - **For existing links**: Automatically load the saved name and tags, ready to edit
+4. Add or edit tags (comma-separated) if desired
+5. Click "Add Link" or "Update Link" to save changes to your Tabinator dashboard
+
+## Features
+
+- **Smart Detection**: Automatically detects if the current page is already saved
+- **Edit Mode**: If a link exists, the popup switches to edit mode, allowing you to update the name and tags
+- **Visual Indicator**: The extension icon shows a green checkmark (✓) badge when viewing a saved page
+- **Auto-sync**: The icon badge updates automatically as you navigate between pages
 
 ## Configuration
 

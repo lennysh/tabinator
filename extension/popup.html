@@ -11,12 +11,27 @@
             box-sizing: border-box;
         }
         
-        body {
+        html {
             width: 400px;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            width: 400px !important;
             min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #1f2937;
-            color: #f3f4f6;
+            background: #1f2937 !important;
+            color: #f3f4f6 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
         }
         
         .container {
@@ -58,6 +73,18 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
+        input[readonly] {
+            background: #1f2937;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        input:disabled {
+            background: #1f2937;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+        
         textarea {
             resize: vertical;
             min-height: 60px;
@@ -78,6 +105,11 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+        }
+        
+        #delete-btn {
+            flex: 0 0 auto;
+            min-width: 80px;
         }
         
         button:disabled {
@@ -101,6 +133,15 @@
         
         .btn-secondary:hover:not(:disabled) {
             background: #374151;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #b91c1c;
         }
         
         .status {
@@ -153,9 +194,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>Add to Tabinator</h1>
+        <h1 id="form-title">Add to Tabinator</h1>
         
         <div id="status" class="status"></div>
+        <div id="debug-info" style="display: none; font-size: 11px; color: #9ca3af; margin-bottom: 8px; padding: 8px; background: #111827; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="font-weight: bold; margin-bottom: 4px;">Debug Log:</div>
+            <div id="debug-text" style="font-family: monospace; font-size: 10px; white-space: pre-wrap;">Initializing...</div>
+        </div>
         
         <form id="link-form">
             <div class="form-group">
@@ -165,7 +210,8 @@
             
             <div class="form-group">
                 <label for="link-url">URL</label>
-                <input type="url" id="link-url" required placeholder="https://example.com">
+                <input type="url" id="link-url" required placeholder="https://example.com" readonly>
+                <div class="tag-input-hint" id="url-hint" style="display: none;">This link is already saved. You can update it below.</div>
             </div>
             
             <div class="form-group">
@@ -176,6 +222,7 @@
             
             <div class="button-group">
                 <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+                <button type="button" id="delete-btn" class="btn-danger" style="display: none;">Delete</button>
                 <button type="submit" id="submit-btn" class="btn-primary">Add Link</button>
             </div>
         </form>
