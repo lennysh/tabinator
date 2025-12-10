@@ -2,6 +2,7 @@
   "name": "tabinator",
   "version": "2.0.0",
   "description": "Dynamic backend for Tabinator with user accounts and SQLite",
+  "license": "MIT",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
