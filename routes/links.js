@@ -20,17 +20,17 @@ router.get('/data', requireAuth, async (req, res) => {
             [userId]
         );
 
-        // Get all links with their tags
+        // Get all links with their tags and timestamps
         const links = await dbAll(
             db,
-            `SELECT l.id, l.name, l.url, l.sort_order,
+            `SELECT l.id, l.name, l.url, l.created_at, l.updated_at,
                     GROUP_CONCAT(t.name) as tags
              FROM links l
              LEFT JOIN link_tags lt ON l.id = lt.link_id
              LEFT JOIN tags t ON lt.tag_id = t.id
              WHERE l.user_id = ?
              GROUP BY l.id
-             ORDER BY l.sort_order, l.id`,
+             ORDER BY l.id`,
             [userId]
         );
 
@@ -38,7 +38,9 @@ router.get('/data', requireAuth, async (req, res) => {
         const formattedLinks = links.map(link => ({
             name: link.name,
             url: link.url,
-            tags: link.tags ? link.tags.split(',') : []
+            tags: link.tags ? link.tags.split(',') : [],
+            created_at: link.created_at,
+            updated_at: link.updated_at
         }));
 
         // Get all groups with their rules (using block_index to preserve block structure)

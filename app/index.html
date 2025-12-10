@@ -340,8 +340,12 @@
                 <div>
                     <label for="sort-select" class="block text-sm font-medium text-gray-400">Sort links by:</label>
                     <select id="sort-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white">
-                        <option value="custom">Custom Order (default)</option>
-                        <option value="az">A-Z (by name)</option>
+                        <option value="az">Name (A-Z)</option>
+                        <option value="za">Name (Z-A)</option>
+                        <option value="created-desc">Created (Newest First)</option>
+                        <option value="created-asc">Created (Oldest First)</option>
+                        <option value="updated-desc">Updated (Newest First)</option>
+                        <option value="updated-asc">Updated (Oldest First)</option>
                     </select>
                 </div>
                 <div class="admin-controls flex self-end gap-2">
@@ -436,7 +440,7 @@
         let allGroups = new Set(); // Will hold group *names*
         let activeGroups = new Set();
         
-        let currentSort = 'custom';
+        let currentSort = 'az';
         let currentQuery = '';
         
         let tagButtonElements = {};
@@ -985,7 +989,12 @@
 
             // Restore saved values from localStorage
             currentQuery = localStorage.getItem('tabinatorQuery') || '';
-            currentSort = localStorage.getItem('tabinatorSort') || 'custom';
+            const savedSort = localStorage.getItem('tabinatorSort');
+            // Migrate 'custom' to 'az' (default)
+            currentSort = savedSort === 'custom' ? 'az' : (savedSort || 'az');
+            if (savedSort === 'custom') {
+                localStorage.setItem('tabinatorSort', 'az');
+            }
             activeTags = new Set(JSON.parse(localStorage.getItem('tabinatorTags') || '[]'));
             activeGroups = new Set(JSON.parse(localStorage.getItem('tabinatorGroups') || '[]'));
 
@@ -1351,8 +1360,50 @@
 
             // 7. Sort the filtered links
             let sortedLinks = [...finalFilteredLinks];
-            if (currentSort === 'az') {
-                sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            switch (currentSort) {
+                case 'az':
+                    // Name (A-Z)
+                    sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    break;
+                case 'za':
+                    // Name (Z-A)
+                    sortedLinks.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+                    break;
+                case 'created-desc':
+                    // Created (Newest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return dateB - dateA;
+                    });
+                    break;
+                case 'created-asc':
+                    // Created (Oldest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return dateA - dateB;
+                    });
+                    break;
+                case 'updated-desc':
+                    // Updated (Newest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+                        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+                        return dateB - dateA;
+                    });
+                    break;
+                case 'updated-asc':
+                    // Updated (Oldest First)
+                    sortedLinks.sort((a, b) => {
+                        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+                        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+                        return dateA - dateB;
+                    });
+                    break;
+                default:
+                    // Default to A-Z if unknown sort option
+                    sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             }
             
             // 8. Store the filtered links for the "Open All" button
