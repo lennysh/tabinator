@@ -32,13 +32,18 @@ A browser extension for quickly adding links to your Tabinator dashboard.
    - **For existing links**: Automatically load the saved name and tags, ready to edit
 4. Add or edit tags (comma-separated) if desired
 5. Click "Add Link" or "Update Link" to save changes to your Tabinator dashboard
+6. To delete a link, click the "Delete" button (only visible for existing links) and confirm
+
+**Note:** The extension preserves URL hash fragments (`#...`) when matching links, so URLs with different hash fragments are treated as distinct links. This is important for Single Page Applications (SPAs) that use hash-based routing.
 
 ## Features
 
 - **Smart Detection**: Automatically detects if the current page is already saved
 - **Edit Mode**: If a link exists, the popup switches to edit mode, allowing you to update the name and tags
+- **Delete Links**: Remove links directly from the extension popup with a confirmation dialog
 - **Visual Indicator**: The extension icon shows a green checkmark (✓) badge when viewing a saved page
 - **Auto-sync**: The icon badge updates automatically as you navigate between pages
+- **URL Matching**: Preserves hash fragments for accurate matching of SPA routes
 
 ## Configuration
 

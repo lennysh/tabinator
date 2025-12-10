@@ -4,20 +4,32 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 
 ## Features
 
-- 🔐 **User Authentication** - Secure login, registration, and password management
+- 🔐 **User Authentication** - Secure login, registration, and password management with persistent sessions
 - 💾 **SQLite Database** - Reliable data storage with proper relationships
 - 🏷️ **Tag System** - Organize links with tags and dynamic tag filtering
-- 📁 **Group Filtering** - Create dynamic groups with include/exclude rules
-- 🔍 **Search & Sort** - Find links quickly with real-time filtering
-- 🚀 **Browser Extension** - Quickly add links from any webpage
+- 📁 **Group Filtering** - Create dynamic groups with include/exclude rules:
+  - Include blocks: Match links that match any include block (OR logic between blocks)
+  - Exclude blocks: Exclude links that match any exclude block
+  - Groups with only exclude blocks: Match all links except those matching exclude rules
+  - Groups with only include blocks: Match only links that match include rules
+  - Groups with both: Match links that match include AND don't match exclude
+- 🔍 **Search & Sort** - Find links quickly with real-time filtering and multiple sort options:
+  - Name (A-Z) - Default
+  - Name (Z-A)
+  - Created (Newest First)
+  - Created (Oldest First)
+  - Updated (Newest First)
+  - Updated (Oldest First)
+- 🚀 **Browser Extension** - Quickly add, edit, or delete links from any webpage
 - 🐳 **Docker Support** - Easy deployment with Docker/Podman
 - ✅ **Input Validation** - XSS protection and data sanitization
+- 🔄 **Auto-clear Filters** - Automatically clears filters when no matching links remain
 
 ## Architecture
 
 * **Frontend:** Single-page application with vanilla JavaScript and Tailwind CSS
 * **Backend:** Node.js/Express with SQLite database
-* **Authentication:** Session-based authentication with bcrypt password hashing
+* **Authentication:** Session-based authentication with bcrypt password hashing and persistent sessions (survives server restarts)
 * **Storage:** SQLite database with proper schema for users, links, tags, and groups
 
 ## Quick Start
@@ -67,14 +79,28 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 - `PUT /api/links` - Update an existing link
 - `DELETE /api/links` - Delete a link
 
+### Groups (requires authentication)
+- `GET /api/groups` - Get all groups for the current user
+- `POST /api/groups` - Create a new group
+- `PUT /api/groups/:id` - Update an existing group
+- `DELETE /api/groups/:id` - Delete a group
+
 ## Browser Extension
 
-A browser extension is included to quickly add links from any webpage.
+A browser extension is included to quickly add, edit, or delete links from any webpage.
+
+### Features
+
+- **Smart Detection** - Automatically detects if the current page is already saved
+- **Edit Mode** - Automatically switches to edit mode for existing links
+- **Delete Links** - Remove links directly from the extension popup
+- **Visual Indicator** - Extension icon shows a green checkmark (✓) when viewing a saved page
+- **Auto-sync** - Icon badge updates automatically as you navigate between pages
 
 ### Installation
 
-1. **Chrome/Edge/Brave:**
-   - Navigate to `chrome://extensions/`
+1. **Chrome/Edge/Brave/Vivaldi:**
+   - Navigate to `chrome://extensions/` (or `edge://extensions/`, `vivaldi://extensions/`)
    - Enable "Developer mode"
    - Click "Load unpacked"
    - Select the `extension` folder
@@ -95,13 +121,15 @@ See `extension/README.md` for detailed instructions.
 docker-compose up --build
 ```
 
-The database will be persisted in `./data/tabinator.db`.
+The database will be persisted in `./data/tabinator.db`, and sessions will be persisted in `./data/sessions.db`.
 
 **Important:** Set a secure `SESSION_SECRET` environment variable in production!
 
 ```bash
 SESSION_SECRET=your-secure-random-string docker-compose up
 ```
+
+Sessions persist across server restarts, so you won't need to log in again after restarting the server.
 
 ### Podman
 
@@ -146,11 +174,12 @@ If you're upgrading from the old YAML-based version, see [MIGRATION.md](MIGRATIO
 ## Security Features
 
 - Password hashing with bcrypt
-- Session-based authentication
+- Session-based authentication with persistent storage (SQLite)
 - Input validation and sanitization
 - XSS protection
 - SQL injection prevention (parameterized queries)
 - User data isolation
+- Secure session cookies (httpOnly, secure in production)
 
 ## Development
 
@@ -169,7 +198,8 @@ If you're upgrading from the old YAML-based version, see [MIGRATION.md](MIGRATIO
 │   └── validation.js # Input validation
 ├── routes/          # API routes
 │   ├── auth.js      # Authentication routes
-│   └── links.js     # Link management routes
+│   ├── links.js     # Link management routes
+│   └── groups.js    # Group management routes
 ├── scripts/         # Utility scripts
 │   └── migrate-yaml-to-sqlite.js
 └── server.js        # Main server file
