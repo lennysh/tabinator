@@ -1203,27 +1203,38 @@
 
         function linkMatchesGroup(link, groupDef) {
             const includeBlocks = groupDef.include || [];
-            // If no include blocks, don't match (empty include means no matches)
-            if (includeBlocks.length === 0) return false;
-            
-            // At least one block must match (OR logic between blocks)
-            const anyIncludeMatches = includeBlocks.some(block => {
-                return checkList(block.tags, 'tags', link) ||
-                       checkList(block.names, 'name', link) ||
-                       checkList(block.urls, 'url', link);
-            });
-
-            if (!anyIncludeMatches) return false;
-
             const excludeBlocks = groupDef.exclude || [];
-            const anyExcludeMatches = excludeBlocks.some(block => {
-                return checkList(block.tags, 'tags', link) ||
-                       checkList(block.names, 'name', link) ||
-                       checkList(block.urls, 'url', link);
-            });
-
-            if (anyExcludeMatches) return false;
             
+            // If no include blocks and no exclude blocks, don't match anything
+            if (includeBlocks.length === 0 && excludeBlocks.length === 0) {
+                return false;
+            }
+            
+            // Check exclude blocks first (if any exclude matches, link is excluded)
+            if (excludeBlocks.length > 0) {
+                const anyExcludeMatches = excludeBlocks.some(block => {
+                    return checkList(block.tags, 'tags', link) ||
+                           checkList(block.names, 'name', link) ||
+                           checkList(block.urls, 'url', link);
+                });
+                
+                if (anyExcludeMatches) return false;
+            }
+            
+            // If there are include blocks, at least one must match (OR logic between blocks)
+            if (includeBlocks.length > 0) {
+                const anyIncludeMatches = includeBlocks.some(block => {
+                    return checkList(block.tags, 'tags', link) ||
+                           checkList(block.names, 'name', link) ||
+                           checkList(block.urls, 'url', link);
+                });
+                
+                if (!anyIncludeMatches) return false;
+            }
+            
+            // If we get here:
+            // - Either there are include blocks and at least one matched, OR there are no include blocks
+            // - AND no exclude blocks matched (or there are no exclude blocks)
             return true;
         }
 
