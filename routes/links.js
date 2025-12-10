@@ -360,5 +360,240 @@ router.delete('/links', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/export
+ * Export all user links as CSV
+ */
+router.get('/export', requireAuth, async (req, res) => {
+    const db = await getDatabase();
+    try {
+        const userId = req.userId;
+
+        // Get all links with their tags
+        const links = await dbAll(
+            db,
+            `SELECT l.name, l.url, l.created_at, l.updated_at,
+                    GROUP_CONCAT(t.name) as tags
+             FROM links l
+             LEFT JOIN link_tags lt ON l.id = lt.link_id
+             LEFT JOIN tags t ON lt.tag_id = t.id
+             WHERE l.user_id = ?
+             GROUP BY l.id
+             ORDER BY l.name`,
+            [userId]
+        );
+
+        // CSV header
+        const csvRows = ['name,url,tags,created_at,updated_at'];
+
+        // CSV rows
+        for (const link of links) {
+            // Escape CSV fields (handle commas, quotes, newlines)
+            const escapeCsv = (field) => {
+                if (!field) return '';
+                const str = String(field);
+                // If contains comma, quote, or newline, wrap in quotes and escape quotes
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const name = escapeCsv(link.name);
+            const url = escapeCsv(link.url);
+            const tags = escapeCsv(link.tags || '');
+            const created_at = escapeCsv(link.created_at || '');
+            const updated_at = escapeCsv(link.updated_at || '');
+
+            csvRows.push(`${name},${url},${tags},${created_at},${updated_at}`);
+        }
+
+        const csv = csvRows.join('\n');
+
+        // Set headers for CSV download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="tabinator-export-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting links:', error);
+        res.status(500).json({ error: 'Failed to export links' });
+    } finally {
+        db.close();
+    }
+});
+
+/**
+ * POST /api/import
+ * Import links from CSV (merge mode - updates existing, creates new)
+ */
+router.post('/import', requireAuth, async (req, res) => {
+    const db = await getDatabase();
+    try {
+        const userId = req.userId;
+        const { csvData } = req.body;
+
+        if (!csvData || typeof csvData !== 'string') {
+            return res.status(400).json({ error: 'CSV data is required' });
+        }
+
+        // Parse CSV
+        const lines = csvData.split('\n').filter(line => line.trim());
+        if (lines.length < 2) {
+            return res.status(400).json({ error: 'CSV must have at least a header and one data row' });
+        }
+
+        // Parse header
+        const header = lines[0].split(',').map(h => h.trim());
+        const nameIndex = header.indexOf('name');
+        const urlIndex = header.indexOf('url');
+        const tagsIndex = header.indexOf('tags');
+        const createdIndex = header.indexOf('created_at');
+        const updatedIndex = header.indexOf('updated_at');
+
+        if (nameIndex === -1 || urlIndex === -1) {
+            return res.status(400).json({ error: 'CSV must have "name" and "url" columns' });
+        }
+
+        // Simple CSV parser (handles quoted fields)
+        const parseCsvLine = (line) => {
+            const fields = [];
+            let currentField = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        // Escaped quote
+                        currentField += '"';
+                        i++; // Skip next quote
+                    } else {
+                        // Toggle quote state
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    fields.push(currentField);
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            fields.push(currentField); // Add last field
+            return fields;
+        };
+
+        let imported = 0;
+        let updated = 0;
+        let skipped = 0;
+        const errors = [];
+
+        // Process each row (skip header)
+        for (let i = 1; i < lines.length; i++) {
+            try {
+                const fields = parseCsvLine(lines[i]);
+                if (fields.length < 2) {
+                    skipped++;
+                    continue;
+                }
+
+                const name = fields[nameIndex]?.trim() || 'Untitled';
+                const url = fields[urlIndex]?.trim() || '';
+                const tagsStr = fields[tagsIndex]?.trim() || '';
+                const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+                if (!url) {
+                    skipped++;
+                    continue;
+                }
+
+                // Check if link exists
+                const existing = await dbGet(
+                    db,
+                    'SELECT id FROM links WHERE user_id = ? AND url = ?',
+                    [userId, url]
+                );
+
+                let linkId;
+                if (existing) {
+                    // Update existing link
+                    await dbRun(
+                        db,
+                        'UPDATE links SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                        [name, existing.id]
+                    );
+                    linkId = existing.id;
+
+                    // Remove existing tags
+                    await dbRun(
+                        db,
+                        'DELETE FROM link_tags WHERE link_id = ?',
+                        [linkId]
+                    );
+
+                    updated++;
+                } else {
+                    // Create new link
+                    const linkResult = await dbRun(
+                        db,
+                        'INSERT INTO links (user_id, name, url) VALUES (?, ?, ?)',
+                        [userId, name, url]
+                    );
+                    linkId = linkResult.lastID;
+                    imported++;
+                }
+
+                // Add tags
+                if (tags.length > 0) {
+                    for (const tagName of tags) {
+                        const sanitizedTag = tagName.trim().substring(0, 100);
+                        if (!sanitizedTag) continue;
+
+                        // Get or create tag
+                        let tag = await dbGet(
+                            db,
+                            'SELECT id FROM tags WHERE user_id = ? AND name = ?',
+                            [userId, sanitizedTag]
+                        );
+
+                        if (!tag) {
+                            const tagResult = await dbRun(
+                                db,
+                                'INSERT INTO tags (user_id, name) VALUES (?, ?)',
+                                [userId, sanitizedTag]
+                            );
+                            tag = { id: tagResult.lastID };
+                        }
+
+                        // Link tag to link
+                        await dbRun(
+                            db,
+                            'INSERT OR IGNORE INTO link_tags (link_id, tag_id) VALUES (?, ?)',
+                            [linkId, tag.id]
+                        );
+                    }
+                }
+            } catch (error) {
+                errors.push(`Row ${i + 1}: ${error.message}`);
+                skipped++;
+            }
+        }
+
+        res.json({
+            message: 'Import completed',
+            imported,
+            updated,
+            skipped,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (error) {
+        console.error('Error importing links:', error);
+        res.status(500).json({ error: 'Failed to import links' });
+    } finally {
+        db.close();
+    }
+});
+
 module.exports = router;
 

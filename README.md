@@ -84,6 +84,8 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 - `POST /api/links` - Create a new link
 - `PUT /api/links` - Update an existing link
 - `DELETE /api/links` - Delete a link
+- `GET /api/export` - Export all links as CSV file
+- `POST /api/import` - Import links from CSV file (merge mode)
 
 ### Groups (requires authentication)
 - `GET /api/groups` - Get all groups for the current user
@@ -232,9 +234,26 @@ Access Settings from the top navigation bar to manage your account:
 
 - **Email Address**: View and update your email address (you can use email or username to login)
 - **Max Tabs Open Limit**: Configure the safety limit for opening multiple tabs (default: 20, range: 1-1000)
+- **Export Links**: Download all your links as a CSV file for backup or migration
+- **Import Links**: Import links from a CSV file (merge mode - updates existing links, adds new ones)
 - **Change Password**: Update your password with validation requirements
 
 All settings are saved immediately and persist across sessions.
+
+### Export/Import Format
+
+The CSV export includes the following columns:
+- `name` - Link name/title
+- `url` - Link URL
+- `tags` - Comma-separated list of tags
+- `created_at` - Creation timestamp
+- `updated_at` - Last update timestamp
+
+When importing:
+- Links are matched by URL (case-sensitive)
+- Existing links are updated with new name and tags
+- New links are created
+- Tags are merged (existing tags are replaced with imported tags)
 
 ## Troubleshooting
 
