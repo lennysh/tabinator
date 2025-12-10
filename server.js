@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 const { initDatabase } = require('./database/init');
 const authRoutes = require('./routes/auth');
 const linksRoutes = require('./routes/links');
@@ -23,7 +24,12 @@ app.use(cors({
 app.use(express.json());
 
 // Session configuration (needed before logging to see userId)
+// Use SQLite store to persist sessions across server restarts
 app.use(session({
+    store: new SQLiteStore({
+        db: 'sessions.db',
+        dir: path.join(__dirname, 'data')
+    }),
     secret: process.env.SESSION_SECRET || 'change-this-secret-in-production',
     resave: false,
     saveUninitialized: false,
