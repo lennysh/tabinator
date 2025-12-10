@@ -63,21 +63,21 @@ router.post('/login', loginValidation, checkValidation, async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Find user
+        // Find user by username OR email
         const user = await dbGet(
             db,
-            'SELECT id, username, password_hash FROM users WHERE username = ?',
-            [username]
+            'SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?',
+            [username, username]
         );
 
         if (!user) {
-            return res.status(401).json({ error: 'Invalid username or password' });
+            return res.status(401).json({ error: 'Invalid username/email or password' });
         }
 
         // Verify password
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Invalid username or password' });
+            return res.status(401).json({ error: 'Invalid username/email or password' });
         }
 
         // Set session
@@ -88,7 +88,8 @@ router.post('/login', loginValidation, checkValidation, async (req, res) => {
             message: 'Login successful',
             user: {
                 id: user.id,
-                username: user.username
+                username: user.username,
+                email: user.email
             }
         });
     } catch (error) {
@@ -116,15 +117,35 @@ router.post('/logout', (req, res) => {
  * GET /api/auth/me
  * Get current user info
  */
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     if (req.session && req.session.userId) {
-        res.json({
-            authenticated: true,
-            user: {
-                id: req.session.userId,
-                username: req.session.username
+        const db = await getDatabase();
+        try {
+            // Get full user profile including email
+            const user = await dbGet(
+                db,
+                'SELECT id, username, email FROM users WHERE id = ?',
+                [req.session.userId]
+            );
+            
+            if (user) {
+                res.json({
+                    authenticated: true,
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        email: user.email
+                    }
+                });
+            } else {
+                res.json({ authenticated: false });
             }
-        });
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            res.status(500).json({ error: 'Failed to fetch user profile' });
+        } finally {
+            db.close();
+        }
     } else {
         res.json({ authenticated: false });
     }
@@ -171,6 +192,125 @@ router.post('/change-password', requireAuth, changePasswordValidation, checkVali
     } catch (error) {
         console.error('Error changing password:', error);
         res.status(500).json({ error: 'Failed to change password' });
+    } finally {
+        db.close();
+    }
+});
+
+/**
+ * GET /api/auth/profile
+ * Get user profile (email, username, config)
+ */
+router.get('/profile', requireAuth, async (req, res) => {
+    const db = await getDatabase();
+    try {
+        const userId = req.userId;
+        
+        // Get user info
+        const user = await dbGet(
+            db,
+            'SELECT id, username, email FROM users WHERE id = ?',
+            [userId]
+        );
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Get user config
+        const config = await dbGet(
+            db,
+            'SELECT max_tabs_open FROM user_config WHERE user_id = ?',
+            [userId]
+        );
+        
+        res.json({
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            },
+            config: {
+                max_tabs_open: config ? config.max_tabs_open : 20
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    } finally {
+        db.close();
+    }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Update user email
+ */
+router.put('/profile', requireAuth, async (req, res) => {
+    const db = await getDatabase();
+    try {
+        const userId = req.userId;
+        const { email } = req.body;
+        
+        // Validate email
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ error: 'Valid email is required' });
+        }
+        
+        // Check if email is already taken by another user
+        const existingUser = await dbGet(
+            db,
+            'SELECT id FROM users WHERE email = ? AND id != ?',
+            [email, userId]
+        );
+        
+        if (existingUser) {
+            return res.status(409).json({ error: 'Email already in use' });
+        }
+        
+        // Update email
+        await dbRun(
+            db,
+            'UPDATE users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [email, userId]
+        );
+        
+        res.json({ message: 'Email updated successfully', email });
+    } catch (error) {
+        console.error('Error updating email:', error);
+        res.status(500).json({ error: 'Failed to update email' });
+    } finally {
+        db.close();
+    }
+});
+
+/**
+ * PUT /api/user/config
+ * Update user config (max_tabs_open)
+ */
+router.put('/config', requireAuth, async (req, res) => {
+    const db = await getDatabase();
+    try {
+        const userId = req.userId;
+        const { max_tabs_open } = req.body;
+        
+        // Validate max_tabs_open
+        const maxTabs = parseInt(max_tabs_open, 10);
+        if (isNaN(maxTabs) || maxTabs < 1 || maxTabs > 1000) {
+            return res.status(400).json({ error: 'max_tabs_open must be between 1 and 1000' });
+        }
+        
+        // Update or insert config
+        await dbRun(
+            db,
+            'INSERT OR REPLACE INTO user_config (user_id, max_tabs_open, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
+            [userId, maxTabs]
+        );
+        
+        res.json({ message: 'Config updated successfully', max_tabs_open: maxTabs });
+    } catch (error) {
+        console.error('Error updating config:', error);
+        res.status(500).json({ error: 'Failed to update config' });
     } finally {
         db.close();
     }

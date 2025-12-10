@@ -150,8 +150,8 @@
             <form id="login-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="login-username" class="block text-sm font-medium text-gray-300">Username</label>
-                        <input type="text" id="login-username" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <label for="login-username" class="block text-sm font-medium text-gray-300">Username or Email</label>
+                        <input type="text" id="login-username" required placeholder="Enter username or email" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
                         <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
@@ -213,7 +213,7 @@
                 <span class="text-gray-300">Logged in as: <strong id="auth-username" class="text-white"></strong></span>
             </div>
             <div class="flex gap-2">
-                <button id="change-password-btn" class="btn btn-gray text-sm">Change Password</button>
+                <button id="admin-settings-btn" class="btn btn-blue text-sm">Admin Settings</button>
                 <button id="logout-btn" class="btn btn-gray text-sm">Logout</button>
             </div>
         </div>
@@ -250,6 +250,65 @@
         </div>
     </div>
     <!-- End Change Password Modal -->
+
+    <!-- Admin Settings Modal -->
+    <div id="admin-settings-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="admin-settings-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 600px;">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="admin-settings-modal-title">Admin Settings</h3>
+            <form id="admin-settings-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="admin-username" class="block text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="admin-username" readonly class="mt-1 block w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-gray-400 cursor-not-allowed" />
+                        <p class="mt-1 text-xs text-gray-400">Username cannot be changed</p>
+                    </div>
+                    
+                    <div>
+                        <label for="admin-email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                        <input type="email" id="admin-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="mt-1 text-xs text-gray-400">You can use your email or username to login</p>
+                    </div>
+                    
+                    <div>
+                        <label for="admin-max-tabs" class="block text-sm font-medium text-gray-300">Max Tabs Open Limit</label>
+                        <input type="number" id="admin-max-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="mt-1 text-xs text-gray-400">Safety limit for opening multiple tabs at once (1-1000)</p>
+                    </div>
+                    
+                    <div class="border-t border-gray-600 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-300 mb-3">Change Password</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="admin-current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
+                                <input type="password" id="admin-current-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label for="admin-new-password" class="block text-sm font-medium text-gray-300">New Password</label>
+                                <input type="password" id="admin-new-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                <p class="mt-1 text-xs text-gray-400">Must be at least 8 characters with uppercase, lowercase, and a number</p>
+                            </div>
+                            <div>
+                                <label for="admin-confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                                <input type="password" id="admin-confirm-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <button type="button" id="admin-change-password-btn" class="btn btn-gray text-sm">Change Password</button>
+                            <div id="admin-password-error" class="hidden text-red-400 text-sm"></div>
+                            <div id="admin-password-success" class="hidden text-green-400 text-sm"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-settings-error" class="hidden text-red-400 text-sm"></div>
+                    <div id="admin-settings-success" class="hidden text-green-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="admin-settings-submit-btn" class="btn btn-blue">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Admin Settings Modal -->
 
     <!-- Groups Management Modal -->
     <div id="groups-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="groups-modal-title" role="dialog" aria-modal="true">
@@ -731,6 +790,195 @@
             }
         }
 
+        async function showAdminSettingsModal() {
+            const modal = document.getElementById('admin-settings-modal');
+            const errorEl = document.getElementById('admin-settings-error');
+            const successEl = document.getElementById('admin-settings-success');
+            const passwordErrorEl = document.getElementById('admin-password-error');
+            const passwordSuccessEl = document.getElementById('admin-password-success');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            passwordErrorEl.classList.add('hidden');
+            passwordSuccessEl.classList.add('hidden');
+            
+            // Clear password fields
+            document.getElementById('admin-current-password').value = '';
+            document.getElementById('admin-new-password').value = '';
+            document.getElementById('admin-confirm-password').value = '';
+            
+            // Load current profile data
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load profile');
+                }
+                
+                const data = await response.json();
+                
+                document.getElementById('admin-username').value = data.user.username;
+                document.getElementById('admin-email').value = data.user.email || '';
+                document.getElementById('admin-max-tabs').value = data.config.max_tabs_open || 20;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                errorEl.textContent = 'Failed to load profile settings';
+                errorEl.classList.remove('hidden');
+            }
+            
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+        }
+
+        function hideAdminSettingsModal() {
+            document.getElementById('admin-settings-modal').classList.add('modal-hidden');
+            document.getElementById('admin-settings-modal').classList.remove('modal-visible');
+        }
+
+        async function handleAdminSettingsSubmit(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('admin-email').value.trim();
+            const maxTabs = parseInt(document.getElementById('admin-max-tabs').value, 10);
+            const errorEl = document.getElementById('admin-settings-error');
+            const successEl = document.getElementById('admin-settings-success');
+            const submitBtn = document.getElementById('admin-settings-submit-btn');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            // Validate
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                errorEl.textContent = 'Please enter a valid email address';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (isNaN(maxTabs) || maxTabs < 1 || maxTabs > 1000) {
+                errorEl.textContent = 'Max tabs must be between 1 and 1000';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                // Update email
+                const emailResponse = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email })
+                });
+                
+                if (!emailResponse.ok) {
+                    const emailData = await emailResponse.json();
+                    throw new Error(emailData.error || 'Failed to update email');
+                }
+                
+                // Update config
+                const configResponse = await fetch('/api/auth/config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ max_tabs_open: maxTabs })
+                });
+                
+                if (!configResponse.ok) {
+                    const configData = await configResponse.json();
+                    throw new Error(configData.error || 'Failed to update config');
+                }
+                
+                // Success
+                successEl.textContent = 'Settings saved successfully!';
+                successEl.classList.remove('hidden');
+                
+                // Reload links to update maxTabsOpen
+                await loadAndRenderLinks();
+                
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    hideAdminSettingsModal();
+                }, 2000);
+            } catch (error) {
+                errorEl.textContent = error.message || 'Failed to save settings';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Settings';
+            }
+        }
+
+        async function handleAdminChangePassword() {
+            const currentPassword = document.getElementById('admin-current-password').value;
+            const newPassword = document.getElementById('admin-new-password').value;
+            const confirmPassword = document.getElementById('admin-confirm-password').value;
+            const errorEl = document.getElementById('admin-password-error');
+            const successEl = document.getElementById('admin-password-success');
+            const submitBtn = document.getElementById('admin-change-password-btn');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            // Validate
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                errorEl.textContent = 'All password fields are required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'New passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+            if (newPassword.length < 8 || !passwordRegex.test(newPassword)) {
+                errorEl.textContent = 'Password must be at least 8 characters with uppercase, lowercase, and a number';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Changing...';
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Failed to change password');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                // Success
+                successEl.textContent = 'Password changed successfully!';
+                successEl.classList.remove('hidden');
+                document.getElementById('admin-current-password').value = '';
+                document.getElementById('admin-new-password').value = '';
+                document.getElementById('admin-confirm-password').value = '';
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Change Password';
+            }
+        }
+
         function showLoginModal() {
             document.getElementById('app-wrapper').classList.add('hidden');
             document.getElementById('auth-bar').classList.add('hidden');
@@ -890,9 +1138,21 @@
                 showLoginModal();
             });
             document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            document.getElementById('change-password-btn').addEventListener('click', showChangePasswordModal);
-            document.getElementById('change-password-form').addEventListener('submit', handleChangePassword);
-            document.getElementById('change-password-cancel-btn').addEventListener('click', hideChangePasswordModal);
+            
+            // Admin Settings
+            const adminSettingsBtn = document.getElementById('admin-settings-btn');
+            const adminSettingsForm = document.getElementById('admin-settings-form');
+            const adminSettingsCancelBtn = document.getElementById('admin-settings-cancel-btn');
+            
+            if (adminSettingsBtn) {
+                adminSettingsBtn.addEventListener('click', showAdminSettingsModal);
+            }
+            if (adminSettingsForm) {
+                adminSettingsForm.addEventListener('submit', handleAdminSettingsSubmit);
+            }
+            if (adminSettingsCancelBtn) {
+                adminSettingsCancelBtn.addEventListener('click', hideAdminSettingsModal);
+            }
             
             // App listeners (only work when authenticated)
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
