@@ -1143,6 +1143,7 @@
             const adminSettingsBtn = document.getElementById('admin-settings-btn');
             const adminSettingsForm = document.getElementById('admin-settings-form');
             const adminSettingsCancelBtn = document.getElementById('admin-settings-cancel-btn');
+            const adminChangePasswordBtn = document.getElementById('admin-change-password-btn');
             
             if (adminSettingsBtn) {
                 adminSettingsBtn.addEventListener('click', showAdminSettingsModal);
@@ -1152,6 +1153,9 @@
             }
             if (adminSettingsCancelBtn) {
                 adminSettingsCancelBtn.addEventListener('click', hideAdminSettingsModal);
+            }
+            if (adminChangePasswordBtn) {
+                adminChangePasswordBtn.addEventListener('click', handleAdminChangePassword);
             }
             
             // App listeners (only work when authenticated)

@@ -4,15 +4,17 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 
 ## Features
 
-- 🔐 **User Authentication** - Secure login, registration, and password management with persistent sessions
+- 🔐 **User Authentication** - Secure login with username or email, registration, and password management with persistent sessions
+- ⚙️ **Admin Settings** - Manage your account settings including email address, max tabs limit, and password
 - 💾 **SQLite Database** - Reliable data storage with proper relationships
 - 🏷️ **Tag System** - Organize links with tags and dynamic tag filtering
 - 📁 **Group Filtering** - Create dynamic groups with include/exclude rules:
-  - Include blocks: Match links that match any include block (OR logic between blocks)
-  - Exclude blocks: Exclude links that match any exclude block
-  - Groups with only exclude blocks: Match all links except those matching exclude rules
-  - Groups with only include blocks: Match only links that match include rules
-  - Groups with both: Match links that match include AND don't match exclude
+  - **Within each block**: Tags OR Names OR URLs (if any field matches, the block matches)
+  - **Between Include blocks**: Block 1 AND Block 2 AND Block 3... (all blocks must match)
+  - **Between Exclude blocks**: Block 1 OR Block 2 OR Block 3... (if any block matches, exclude the link)
+  - **Groups with only exclude blocks**: Match all links EXCEPT those matching any exclude block
+  - **Groups with only include blocks**: Match only links that match ALL include blocks
+  - **Groups with both**: (All Include blocks match) AND NOT (Any Exclude block matches)
 - 🔍 **Search & Sort** - Find links quickly with real-time filtering and multiple sort options:
   - Name (A-Z) - Default
   - Name (Z-A)
@@ -63,15 +65,19 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 1. Install dependencies: `npm install`
 2. Start the server: `npm start`
 3. Register a new account at `http://localhost:8080`
+4. After registration, you can login with either your username or email address
 
 ## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
+- `POST /api/auth/login` - Login user (accepts username or email)
 - `POST /api/auth/logout` - Logout user
 - `POST /api/auth/change-password` - Change user password (requires authentication)
 - `GET /api/auth/me` - Get current user info
+- `GET /api/auth/profile` - Get user profile and config (requires authentication)
+- `PUT /api/auth/profile` - Update user email address (requires authentication)
+- `PUT /api/auth/config` - Update user config (max_tabs_open) (requires authentication)
 
 ### Links (requires authentication)
 - `GET /api/data` - Get all data (links, tags, groups, config)
@@ -220,10 +226,21 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is open source and available for personal use.
 
+## Admin Settings
+
+Access the Admin Settings from the top navigation bar to manage your account:
+
+- **Email Address**: View and update your email address (you can use email or username to login)
+- **Max Tabs Open Limit**: Configure the safety limit for opening multiple tabs (default: 20, range: 1-1000)
+- **Change Password**: Update your password with validation requirements
+
+All settings are saved immediately and persist across sessions.
+
 ## Troubleshooting
 
 ### Can't login after migration
 - Default credentials: `admin` / `admin`
+- You can login with either username (`admin`) or email address
 - Check database exists: `ls -la data/tabinator.db`
 - Try re-running migration: `npm run migrate`
 
@@ -236,3 +253,9 @@ This project is open source and available for personal use.
 - Check file permissions on `data/` directory
 - Verify SQLite is installed: `sqlite3 --version`
 - Check server logs for detailed error messages
+
+### Group filtering not working as expected
+- Remember: Include blocks use AND logic (all must match)
+- Exclude blocks use OR logic (any match excludes the link)
+- Within each block, Tags/Names/URLs use OR logic
+- Check the info box in the group edit modal for detailed logic explanation
