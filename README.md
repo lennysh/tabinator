@@ -5,7 +5,7 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 ## Features
 
 - 🔐 **User Authentication** - Secure login with username or email, registration, and password management with persistent sessions
-- ⚙️ **Admin Settings** - Manage your account settings including email address, max tabs limit, and password
+- ⚙️ **Settings** - Manage your account settings including email address, max tabs limit, and password
 - 💾 **SQLite Database** - Reliable data storage with proper relationships
 - 🏷️ **Tag System** - Organize links with tags and dynamic tag filtering
 - 📁 **Group Filtering** - Create dynamic groups with include/exclude rules:
@@ -226,9 +226,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is open source and available for personal use.
 
-## Admin Settings
+## Settings
 
-Access the Admin Settings from the top navigation bar to manage your account:
+Access Settings from the top navigation bar to manage your account:
 
 - **Email Address**: View and update your email address (you can use email or username to login)
 - **Max Tabs Open Limit**: Configure the safety limit for opening multiple tabs (default: 20, range: 1-1000)
