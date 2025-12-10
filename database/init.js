@@ -34,7 +34,32 @@ function initDatabase() {
                 return reject(err);
             }
             console.log('Database schema initialized');
-            resolve(db);
+            
+            // Migrate existing databases: add block_index column if it doesn't exist
+            db.all("PRAGMA table_info(group_rules)", (err, cols) => {
+                if (err) {
+                    console.error('Error checking columns:', err);
+                    resolve(db);
+                    return;
+                }
+                if (cols && cols.length > 0) {
+                    const hasBlockIndex = cols.some(col => col.name === 'block_index');
+                    if (!hasBlockIndex) {
+                        db.run("ALTER TABLE group_rules ADD COLUMN block_index INTEGER NOT NULL DEFAULT 0", (err) => {
+                            if (err) {
+                                console.error('Error adding block_index column:', err);
+                            } else {
+                                console.log('Added block_index column to group_rules table');
+                            }
+                            resolve(db);
+                        });
+                    } else {
+                        resolve(db);
+                    }
+                } else {
+                    resolve(db);
+                }
+            });
         });
     });
 }

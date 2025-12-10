@@ -251,6 +251,72 @@
     </div>
     <!-- End Change Password Modal -->
 
+    <!-- Groups Management Modal -->
+    <div id="groups-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="groups-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 1200px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium leading-6 text-white" id="groups-modal-title">Manage Groups</h3>
+                <button id="groups-modal-close-btn" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <button id="add-group-btn" class="btn btn-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Add New Group
+                </button>
+            </div>
+
+            <div id="groups-list" class="space-y-4">
+                <!-- Groups will be rendered here -->
+            </div>
+        </div>
+    </div>
+    <!-- End Groups Management Modal -->
+
+    <!-- Group Edit Modal -->
+    <div id="group-edit-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="group-edit-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 90vw; width: 800px; max-height: 90vh; overflow-y: auto;">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="group-edit-modal-title">Edit Group</h3>
+            <form id="group-edit-form">
+                <input type="hidden" id="group-edit-id" />
+                <div class="space-y-4">
+                    <div>
+                        <label for="group-edit-name" class="block text-sm font-medium text-gray-300">Group Name</label>
+                        <input type="text" id="group-edit-name" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Include Rules</label>
+                            <div id="group-edit-include" class="space-y-2">
+                                <!-- Include blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-include-block-btn" class="mt-2 btn btn-gray text-sm">+ Add Include Block</button>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Exclude Rules</label>
+                            <div id="group-edit-exclude" class="space-y-2">
+                                <!-- Exclude blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-exclude-block-btn" class="mt-2 btn btn-gray text-sm">+ Add Exclude Block</button>
+                        </div>
+                    </div>
+                    
+                    <div id="group-edit-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="group-edit-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="group-edit-submit-btn" class="btn btn-blue">Save Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Group Edit Modal -->
+
     <!-- Main App Container (hidden until authenticated) -->
     <div id="app-wrapper" class="hidden">
     <div class="container max-w-7xl mx-auto p-4 md:p-8">
@@ -278,7 +344,11 @@
                         <option value="az">A-Z (by name)</option>
                     </select>
                 </div>
-                <div class="admin-controls flex self-end">
+                <div class="admin-controls flex self-end gap-2">
+                    <button id="manage-groups-btn" class="btn btn-blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
+                        Manage Groups
+                    </button>
                     <button id="show-add-modal-btn" class="btn btn-green">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                         Add New Link
@@ -815,6 +885,67 @@
             modalCancelBtn.addEventListener('click', hideModal);
             linkForm.addEventListener('submit', handleFormSubmit);
 
+            // Groups management listeners
+            const manageGroupsBtn = document.getElementById('manage-groups-btn');
+            const groupsModalCloseBtn = document.getElementById('groups-modal-close-btn');
+            const addGroupBtn = document.getElementById('add-group-btn');
+            const groupEditForm = document.getElementById('group-edit-form');
+            const groupEditCancelBtn = document.getElementById('group-edit-cancel-btn');
+            const addIncludeBlockBtn = document.getElementById('add-include-block-btn');
+            const addExcludeBlockBtn = document.getElementById('add-exclude-block-btn');
+            
+            if (manageGroupsBtn) {
+                manageGroupsBtn.addEventListener('click', showGroupsModal);
+            }
+            if (groupsModalCloseBtn) {
+                groupsModalCloseBtn.addEventListener('click', hideGroupsModal);
+            }
+            if (addGroupBtn) {
+                addGroupBtn.addEventListener('click', () => showGroupEditModal());
+            }
+            if (groupEditForm) {
+                groupEditForm.addEventListener('submit', handleGroupFormSubmit);
+            }
+            if (groupEditCancelBtn) {
+                groupEditCancelBtn.addEventListener('click', hideGroupEditModal);
+            }
+            if (addIncludeBlockBtn) {
+                addIncludeBlockBtn.addEventListener('click', () => addGroupRuleBlock('group-edit-include'));
+            }
+            if (addExcludeBlockBtn) {
+                addExcludeBlockBtn.addEventListener('click', () => addGroupRuleBlock('group-edit-exclude'));
+            }
+            
+            // Delegated listeners for groups list
+            const groupsListContainer = document.getElementById('groups-list');
+            if (groupsListContainer) {
+                groupsListContainer.addEventListener('click', async (e) => {
+                    const editBtn = e.target.closest('.edit-group-btn');
+                    if (editBtn) {
+                        const groupId = parseInt(editBtn.dataset.groupId);
+                        // Fetch fresh group data from API
+                        try {
+                            const groups = await apiRequest('/api/groups', 'GET');
+                            const group = groups.find(g => g.id === groupId);
+                            if (group) {
+                                showGroupEditModal(group);
+                            } else {
+                                showGlobalError('Group not found');
+                            }
+                        } catch (error) {
+                            console.error('Error loading group:', error);
+                            showGlobalError('Failed to load group');
+                        }
+                    }
+                    
+                    const deleteBtn = e.target.closest('.delete-group-btn');
+                    if (deleteBtn) {
+                        const groupId = parseInt(deleteBtn.dataset.groupId);
+                        handleDeleteGroup(groupId);
+                    }
+                });
+            }
+
             // Listener for dynamic Edit/Delete buttons
             document.getElementById('app-container').addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.delete-link-btn');
@@ -1062,13 +1193,17 @@
 
         function linkMatchesGroup(link, groupDef) {
             const includeBlocks = groupDef.include || [];
-            const allIncludesMatch = includeBlocks.every(block => {
+            // If no include blocks, don't match (empty include means no matches)
+            if (includeBlocks.length === 0) return false;
+            
+            // At least one block must match (OR logic between blocks)
+            const anyIncludeMatches = includeBlocks.some(block => {
                 return checkList(block.tags, 'tags', link) ||
                        checkList(block.names, 'name', link) ||
                        checkList(block.urls, 'url', link);
             });
 
-            if (!allIncludesMatch) return false;
+            if (!anyIncludeMatches) return false;
 
             const excludeBlocks = groupDef.exclude || [];
             const anyExcludeMatches = excludeBlocks.some(block => {
@@ -1468,6 +1603,295 @@
                 console.error("Failed to delete link:", error);
             }
         }
+
+        // === Groups Management ===
+        let groupsList = [];
+
+        async function loadGroups() {
+            try {
+                groupsList = await apiRequest('/api/groups', 'GET');
+                renderGroupsList();
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                showGlobalError('Failed to load groups');
+            }
+        }
+
+        function renderGroupsList() {
+            const container = document.getElementById('groups-list');
+            if (!container) return;
+
+            if (groupsList.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-8">No groups defined. Click "Add New Group" to create one.</p>';
+                return;
+            }
+
+            container.innerHTML = groupsList.map(group => {
+                const includeRules = formatGroupRules(group.include || []);
+                const excludeRules = formatGroupRules(group.exclude || []);
+                
+                return `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="text-lg font-semibold text-white">${group.name}</h4>
+                            <div class="flex gap-2">
+                                <button class="edit-group-btn btn-link" data-group-id="${group.id}" title="Edit Group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="delete-group-btn btn-link text-red-400 hover:text-red-300" data-group-id="${group.id}" title="Delete Group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <div class="text-gray-400 font-medium mb-1">Include:</div>
+                                <div class="text-gray-300">${includeRules || '<span class="text-gray-500">None</span>'}</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-400 font-medium mb-1">Exclude:</div>
+                                <div class="text-gray-300">${excludeRules || '<span class="text-gray-500">None</span>'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatGroupRules(rules) {
+            if (!rules || rules.length === 0) return '';
+            return rules.map(block => {
+                const parts = [];
+                if (block.tags && block.tags.length > 0) {
+                    parts.push(`Tags: ${block.tags.join(', ')}`);
+                }
+                if (block.names && block.names.length > 0) {
+                    parts.push(`Names: ${block.names.join(', ')}`);
+                }
+                if (block.urls && block.urls.length > 0) {
+                    parts.push(`URLs: ${block.urls.join(', ')}`);
+                }
+                return parts.join('; ');
+            }).join(' | ');
+        }
+
+        function showGroupsModal() {
+            document.getElementById('groups-modal').classList.remove('modal-hidden');
+            document.getElementById('groups-modal').classList.add('modal-visible');
+            loadGroups();
+        }
+
+        function hideGroupsModal() {
+            document.getElementById('groups-modal').classList.add('modal-hidden');
+            document.getElementById('groups-modal').classList.remove('modal-visible');
+        }
+
+        function showGroupEditModal(group = null) {
+            const modal = document.getElementById('group-edit-modal');
+            const form = document.getElementById('group-edit-form');
+            const errorEl = document.getElementById('group-edit-error');
+            
+            errorEl.classList.add('hidden');
+            form.reset();
+            
+            if (group) {
+                document.getElementById('group-edit-id').value = group.id;
+                document.getElementById('group-edit-name').value = group.name;
+                renderGroupRules('group-edit-include', group.include || []);
+                renderGroupRules('group-edit-exclude', group.exclude || []);
+                document.getElementById('group-edit-modal-title').textContent = 'Edit Group';
+            } else {
+                document.getElementById('group-edit-id').value = '';
+                document.getElementById('group-edit-name').value = '';
+                document.getElementById('group-edit-include').innerHTML = '';
+                document.getElementById('group-edit-exclude').innerHTML = '';
+                document.getElementById('group-edit-modal-title').textContent = 'Add New Group';
+            }
+            
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+        }
+
+        function hideGroupEditModal() {
+            document.getElementById('group-edit-modal').classList.add('modal-hidden');
+            document.getElementById('group-edit-modal').classList.remove('modal-visible');
+        }
+
+        function renderGroupRules(containerId, rules) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (rules.length === 0) {
+                return;
+            }
+            
+            rules.forEach((block, blockIndex) => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
+                blockDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs text-gray-400">Block ${blockIndex + 1}</span>
+                        <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="text-xs text-gray-400">Tags (comma-separated):</label>
+                            <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.tags || []).join(', ')}" placeholder="tag1, tag2">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400">Names (comma-separated):</label>
+                            <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.names || []).join(', ')}" placeholder="name1, name2">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400">URLs (comma-separated):</label>
+                            <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                                   value="${(block.urls || []).join(', ')}" placeholder="url1, url2">
+                        </div>
+                    </div>
+                `;
+                
+                blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
+                    blockDiv.remove();
+                });
+                
+                container.appendChild(blockDiv);
+            });
+        }
+
+        function addGroupRuleBlock(containerId) {
+            const container = document.getElementById(containerId);
+            const blockDiv = document.createElement('div');
+            blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
+            blockDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs text-gray-400">New Block</span>
+                    <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs text-gray-400">Tags (comma-separated):</label>
+                        <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="tag1, tag2">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400">Names (comma-separated):</label>
+                        <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="name1, name2">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400">URLs (comma-separated):</label>
+                        <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
+                               placeholder="url1, url2">
+                    </div>
+                </div>
+            `;
+            
+            blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
+                blockDiv.remove();
+            });
+            
+            container.appendChild(blockDiv);
+        }
+
+        function collectGroupRules(containerId) {
+            const container = document.getElementById(containerId);
+            const blocks = container.querySelectorAll('.bg-gray-800');
+            const rules = [];
+            
+            blocks.forEach(block => {
+                const tagsInput = block.querySelector('.block-rule-tags').value.trim();
+                const namesInput = block.querySelector('.block-rule-names').value.trim();
+                const urlsInput = block.querySelector('.block-rule-urls').value.trim();
+                
+                const blockData = {};
+                if (tagsInput) {
+                    blockData.tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+                }
+                if (namesInput) {
+                    blockData.names = namesInput.split(',').map(n => n.trim()).filter(n => n);
+                }
+                if (urlsInput) {
+                    blockData.urls = urlsInput.split(',').map(u => u.trim()).filter(u => u);
+                }
+                
+                // Only add block if it has at least one rule
+                if (Object.keys(blockData).length > 0) {
+                    rules.push(blockData);
+                }
+            });
+            
+            return rules;
+        }
+
+        async function handleGroupFormSubmit(e) {
+            e.preventDefault();
+            const groupId = document.getElementById('group-edit-id').value;
+            const name = document.getElementById('group-edit-name').value.trim();
+            const errorEl = document.getElementById('group-edit-error');
+            const submitBtn = document.getElementById('group-edit-submit-btn');
+            
+            errorEl.classList.add('hidden');
+            
+            if (!name) {
+                errorEl.textContent = 'Group name is required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const include = collectGroupRules('group-edit-include');
+            const exclude = collectGroupRules('group-edit-exclude');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                if (groupId) {
+                    // Update
+                    await apiRequest(`/api/groups/${groupId}`, 'PUT', { name, include, exclude });
+                } else {
+                    // Create
+                    await apiRequest('/api/groups', 'POST', { name, include, exclude });
+                }
+                
+                hideGroupEditModal();
+                await loadGroups();
+                await loadAndRenderLinks(); // Reload to update groups in main view
+            } catch (error) {
+                errorEl.textContent = error.message || 'Failed to save group';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Group';
+            }
+        }
+
+        async function handleDeleteGroup(groupId) {
+            const group = groupsList.find(g => g.id == groupId);
+            const groupName = group ? group.name : 'this group';
+            
+            const confirmed = await showConfirmation(
+                'Delete Group?',
+                `Are you sure you want to delete the group "<strong class="text-white">${groupName}</strong>"?<br><br>This action cannot be undone.`,
+                'Delete',
+                'btn-red'
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            try {
+                await apiRequest(`/api/groups/${groupId}`, 'DELETE');
+                await loadGroups();
+                await loadAndRenderLinks(); // Reload to update groups in main view
+            } catch (error) {
+                console.error('Failed to delete group:', error);
+                showGlobalError('Failed to delete group');
+            }
+        }
+
 
     </script>
 </body>

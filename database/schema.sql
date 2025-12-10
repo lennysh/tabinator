@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS group_rules (
     rule_type TEXT NOT NULL CHECK(rule_type IN ('include', 'exclude')),
     match_type TEXT NOT NULL CHECK(match_type IN ('tags', 'names', 'urls')),
     match_value TEXT NOT NULL,
+    block_index INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );

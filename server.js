@@ -5,6 +5,7 @@ const session = require('express-session');
 const { initDatabase } = require('./database/init');
 const authRoutes = require('./routes/auth');
 const linksRoutes = require('./routes/links');
+const groupsRoutes = require('./routes/groups');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -69,6 +70,7 @@ app.use((err, req, res, next) => {
 // --- API Routes ---
 
 app.use('/api/auth', authRoutes);
+app.use('/api/groups', groupsRoutes);
 app.use('/api', linksRoutes);
 
 // --- Frontend Route ---
