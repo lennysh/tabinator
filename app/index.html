@@ -289,16 +289,33 @@
                         <input type="text" id="group-edit-name" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     
+                    <div class="mb-4 p-3 bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg">
+                        <p class="text-sm text-blue-200 font-medium mb-2">📋 How Group Logic Works:</p>
+                        <ul class="text-xs text-blue-100 space-y-1 ml-4 list-disc">
+                            <li><strong>Within each block:</strong> Tags <span class="text-yellow-300">OR</span> Names <span class="text-yellow-300">OR</span> URLs (if any field matches, the block matches)</li>
+                            <li><strong>Between Include blocks:</strong> Block 1 <span class="text-yellow-300">AND</span> Block 2 <span class="text-yellow-300">AND</span> Block 3... (all blocks must match)</li>
+                            <li><strong>Between Exclude blocks:</strong> Block 1 <span class="text-yellow-300">OR</span> Block 2 <span class="text-yellow-300">OR</span> Block 3... (if any block matches, exclude the link)</li>
+                            <li><strong>Include + Exclude:</strong> (All Include blocks match) <span class="text-yellow-300">AND NOT</span> (Any Exclude block matches)</li>
+                            <li><strong>Only Exclude blocks:</strong> Matches all links <span class="text-yellow-300">EXCEPT</span> those matching any exclude block</li>
+                        </ul>
+                    </div>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Include Rules</label>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                Include Rules
+                                <span class="text-xs text-gray-400 font-normal">(all blocks must match - AND logic)</span>
+                            </label>
                             <div id="group-edit-include" class="space-y-2">
                                 <!-- Include blocks will be added here -->
                             </div>
                             <button type="button" id="add-include-block-btn" class="mt-2 btn btn-gray text-sm">+ Add Include Block</button>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Exclude Rules</label>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                Exclude Rules
+                                <span class="text-xs text-gray-400 font-normal">(any matching block excludes the link)</span>
+                            </label>
                             <div id="group-edit-exclude" class="space-y-2">
                                 <!-- Exclude blocks will be added here -->
                             </div>
@@ -1221,15 +1238,15 @@
                 if (anyExcludeMatches) return false;
             }
             
-            // If there are include blocks, at least one must match (OR logic between blocks)
+            // If there are include blocks, ALL blocks must match (AND logic between blocks)
             if (includeBlocks.length > 0) {
-                const anyIncludeMatches = includeBlocks.some(block => {
+                const allIncludeMatches = includeBlocks.every(block => {
                     return checkList(block.tags, 'tags', link) ||
                            checkList(block.names, 'name', link) ||
                            checkList(block.urls, 'url', link);
                 });
                 
-                if (!anyIncludeMatches) return false;
+                if (!allIncludeMatches) return false;
             }
             
             // If we get here:
@@ -1825,7 +1842,10 @@
                 blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
                 blockDiv.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs text-gray-400">Block ${blockIndex + 1}</span>
+                        <div>
+                            <span class="text-xs font-medium text-gray-300">Block ${blockIndex + 1}</span>
+                            <span class="text-xs text-gray-500 ml-2">(Tags OR Names OR URLs)</span>
+                        </div>
                         <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
                     </div>
                     <div class="space-y-2">
@@ -1834,11 +1854,13 @@
                             <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
                                    value="${(block.tags || []).join(', ')}" placeholder="tag1, tag2">
                         </div>
+                        <div class="text-center text-xs text-gray-600">OR</div>
                         <div>
                             <label class="text-xs text-gray-400">Names (comma-separated):</label>
                             <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
                                    value="${(block.names || []).join(', ')}" placeholder="name1, name2">
                         </div>
+                        <div class="text-center text-xs text-gray-600">OR</div>
                         <div>
                             <label class="text-xs text-gray-400">URLs (comma-separated):</label>
                             <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
@@ -1849,19 +1871,49 @@
                 
                 blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
                     blockDiv.remove();
+                    // Re-number blocks after removal
+                    updateBlockNumbers(containerId);
                 });
                 
                 container.appendChild(blockDiv);
+                
+                // Add separator between blocks (but not after the last one)
+                if (blockIndex < rules.length - 1) {
+                    const separatorDiv = document.createElement('div');
+                    // Determine if this is include or exclude section
+                    const isInclude = containerId.includes('include');
+                    separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                    separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                    separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                    container.appendChild(separatorDiv);
+                }
             });
         }
 
         function addGroupRuleBlock(containerId) {
             const container = document.getElementById(containerId);
+            const existingBlocks = container.querySelectorAll('.bg-gray-800');
+            const blockIndex = existingBlocks.length;
+            
+            // Add separator before new block if there are existing blocks
+            if (existingBlocks.length > 0) {
+                const separatorDiv = document.createElement('div');
+                // Determine if this is include or exclude section
+                const isInclude = containerId.includes('include');
+                separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                container.appendChild(separatorDiv);
+            }
+            
             const blockDiv = document.createElement('div');
             blockDiv.className = 'bg-gray-800 rounded p-3 border border-gray-600';
             blockDiv.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs text-gray-400">New Block</span>
+                    <div>
+                        <span class="text-xs font-medium text-gray-300">Block ${blockIndex + 1}</span>
+                        <span class="text-xs text-gray-500 ml-2">(Tags OR Names OR URLs)</span>
+                    </div>
                     <button type="button" class="remove-block-btn text-red-400 hover:text-red-300 text-xs">Remove</button>
                 </div>
                 <div class="space-y-2">
@@ -1870,11 +1922,13 @@
                         <input type="text" class="block-rule-tags mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
                                placeholder="tag1, tag2">
                     </div>
+                    <div class="text-center text-xs text-gray-600">OR</div>
                     <div>
                         <label class="text-xs text-gray-400">Names (comma-separated):</label>
                         <input type="text" class="block-rule-names mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
                                placeholder="name1, name2">
                     </div>
+                    <div class="text-center text-xs text-gray-600">OR</div>
                     <div>
                         <label class="text-xs text-gray-400">URLs (comma-separated):</label>
                         <input type="text" class="block-rule-urls mt-1 w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm" 
@@ -1884,10 +1938,56 @@
             `;
             
             blockDiv.querySelector('.remove-block-btn').addEventListener('click', () => {
+                // Remove the block and any separator before it
+                const prevSibling = blockDiv.previousElementSibling;
+                if (prevSibling && (prevSibling.textContent.trim() === 'OR' || prevSibling.textContent.trim() === 'AND')) {
+                    prevSibling.remove();
+                }
                 blockDiv.remove();
+                // Re-number blocks after removal
+                updateBlockNumbers(containerId);
             });
             
             container.appendChild(blockDiv);
+            // Update block numbers after adding
+            updateBlockNumbers(containerId);
+        }
+        
+        function updateBlockNumbers(containerId) {
+            const container = document.getElementById(containerId);
+            const blocks = container.querySelectorAll('.bg-gray-800');
+            
+            // Remove all existing separators (both AND and OR)
+            const separators = container.querySelectorAll('.text-center.text-xs.my-2.font-bold');
+            separators.forEach(sep => sep.remove());
+            
+            // Determine if this is include or exclude section
+            const isInclude = containerId.includes('include');
+            
+            // Re-number blocks and add separators between them
+            blocks.forEach((block, index) => {
+                const header = block.querySelector('.flex.justify-between');
+                if (header) {
+                    const blockNumSpan = header.querySelector('span.text-xs.font-medium');
+                    if (blockNumSpan) {
+                        blockNumSpan.textContent = `Block ${index + 1}`;
+                    }
+                }
+                
+                // Add separator after this block (but not after the last one)
+                if (index < blocks.length - 1) {
+                    const separatorDiv = document.createElement('div');
+                    separatorDiv.className = 'text-center text-xs my-2 font-bold';
+                    separatorDiv.textContent = isInclude ? 'AND' : 'OR';
+                    separatorDiv.className += isInclude ? ' text-green-400' : ' text-yellow-400';
+                    // Insert after the current block
+                    if (block.nextSibling) {
+                        container.insertBefore(separatorDiv, block.nextSibling);
+                    } else {
+                        container.appendChild(separatorDiv);
+                    }
+                }
+            });
         }
 
         function collectGroupRules(containerId) {
