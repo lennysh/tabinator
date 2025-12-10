@@ -1313,20 +1313,52 @@
                 }
             }
             
-            // 5. Update the tag and group pill UI
+            // 5. Auto-clear filters that result in zero matches
+            // Use the availableTags and availableGroups we calculated to determine what to clear
+            if (finalFilteredLinks.length === 0 && (activeTags.size > 0 || activeGroups.size > 0)) {
+                let filtersCleared = false;
+                
+                // Remove tags that are no longer available (don't match any links)
+                activeTags.forEach(tag => {
+                    if (!availableTags.has(tag)) {
+                        activeTags.delete(tag);
+                        filtersCleared = true;
+                    }
+                });
+                
+                // Remove groups that are no longer available (don't match any links)
+                activeGroups.forEach(groupName => {
+                    if (!availableGroups.has(groupName)) {
+                        activeGroups.delete(groupName);
+                        filtersCleared = true;
+                    }
+                });
+                
+                // Save cleared filters to localStorage and re-render
+                if (filtersCleared) {
+                    localStorage.setItem('tabinatorTags', JSON.stringify(Array.from(activeTags)));
+                    localStorage.setItem('tabinatorGroups', JSON.stringify(Array.from(activeGroups)));
+                    
+                    // Re-render with cleared filters
+                    renderApp();
+                    return; // Exit early since we're re-rendering
+                }
+            }
+
+            // 6. Update the tag and group pill UI
             updateTagPills(availableTags);
             updateGroupPills(availableGroups);
 
-            // 6. Sort the filtered links
+            // 7. Sort the filtered links
             let sortedLinks = [...finalFilteredLinks];
             if (currentSort === 'az') {
                 sortedLinks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             }
             
-            // 7. Store the filtered links for the "Open All" button
+            // 8. Store the filtered links for the "Open All" button
             currentlyFilteredLinks = sortedLinks;
             
-            // 8. Render the final list
+            // 9. Render the final list
             if (sortedLinks.length > 0) {
                 renderLinkList(sortedLinks);
                 noResultsEl.classList.add('hidden');
@@ -1336,7 +1368,7 @@
                 appEl.classList.add('hidden'); // Hide the <main> element
             }
             
-            // 9. Update the "Open All" button text
+            // 10. Update the "Open All" button text
             const openAllBtn = document.getElementById('open-all-filtered-btn');
             const linkCount = currentlyFilteredLinks.length;
             openAllBtn.textContent = `Open All Filtered Links (${linkCount})`;
