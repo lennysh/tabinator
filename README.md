@@ -2,6 +2,10 @@
 
 A self-hosted tab dashboard for managing and organizing browser links with user accounts, SQLite database, and browser extension support.
 
+<div align="center">
+  <img src="images/tabinator.png" alt="Tabinator Screenshot" width="800" />
+</div>
+
 ## Features
 
 - 🔐 **User Authentication** - Secure login with username or email, registration, and password management with persistent sessions
