@@ -71,8 +71,8 @@ async function migrate() {
                 // Insert link
                 const linkResult = await dbRun(
                     db,
-                    'INSERT INTO links (user_id, name, url, sort_order) VALUES (?, ?, ?, ?)',
-                    [userId, link.name || 'Untitled', link.url || '', i]
+                    'INSERT INTO links (user_id, name, url) VALUES (?, ?, ?)',
+                    [userId, link.name || 'Untitled', link.url || '']
                 );
                 
                 const linkId = linkResult.lastID;

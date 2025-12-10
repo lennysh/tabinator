@@ -140,18 +140,11 @@ router.post('/links', requireAuth, linkValidation, checkValidation, async (req, 
             return res.status(409).json({ error: 'A link with this URL already exists' });
         }
 
-        // Get max sort_order
-        const maxSort = await dbGet(
-            db,
-            'SELECT COALESCE(MAX(sort_order), -1) + 1 as next_sort FROM links WHERE user_id = ?',
-            [userId]
-        );
-
         // Insert link
         const linkResult = await dbRun(
             db,
-            'INSERT INTO links (user_id, name, url, sort_order) VALUES (?, ?, ?, ?)',
-            [userId, name, url, maxSort.next_sort]
+            'INSERT INTO links (user_id, name, url) VALUES (?, ?, ?)',
+            [userId, name, url]
         );
 
         const linkId = linkResult.lastID;
