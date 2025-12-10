@@ -66,6 +66,8 @@ app.use((req, res, next) => {
 
 // Serve static files from the 'app' directory
 app.use(express.static(path.join(__dirname, 'app')));
+// Serve images directory
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
