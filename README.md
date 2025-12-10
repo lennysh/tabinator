@@ -6,6 +6,7 @@ A self-hosted tab dashboard for managing and organizing browser links with user 
 
 - 🔐 **User Authentication** - Secure login with username or email, registration, and password management with persistent sessions
 - ⚙️ **Settings** - Manage your account settings including email address, max tabs limit, and password
+- 📤 **Export/Import** - Export links to CSV for backup or import from CSV (merge mode)
 - 💾 **SQLite Database** - Reliable data storage with proper relationships
 - 🏷️ **Tag System** - Organize links with tags and dynamic tag filtering
 - 📁 **Group Filtering** - Create dynamic groups with include/exclude rules:
