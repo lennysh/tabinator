@@ -41,10 +41,10 @@ router.get('/data', requireAuth, async (req, res) => {
             tags: link.tags ? link.tags.split(',') : []
         }));
 
-        // Get all groups with their rules
+        // Get all groups with their rules (using block_index to preserve block structure)
         const groups = await dbAll(
             db,
-            'SELECT id, name FROM groups WHERE user_id = ?',
+            'SELECT id, name FROM groups WHERE user_id = ? ORDER BY name',
             [userId]
         );
 
@@ -52,26 +52,55 @@ router.get('/data', requireAuth, async (req, res) => {
         for (const group of groups) {
             const rules = await dbAll(
                 db,
-                'SELECT rule_type, match_type, match_value FROM group_rules WHERE group_id = ?',
+                'SELECT rule_type, match_type, match_value, block_index FROM group_rules WHERE group_id = ? ORDER BY rule_type, block_index, match_type',
                 [group.id]
             );
 
             const include = [];
             const exclude = [];
             
+            // Group rules by rule_type and block_index to preserve block structure
+            const includeBlocks = {};
+            const excludeBlocks = {};
+            
             for (const rule of rules) {
-                const block = { [rule.match_type]: [rule.match_value] };
-                if (rule.rule_type === 'include') {
-                    include.push(block);
-                } else {
-                    exclude.push(block);
+                const blockKey = `${rule.rule_type}_${rule.block_index}`;
+                const blocks = rule.rule_type === 'include' ? includeBlocks : excludeBlocks;
+                
+                if (!blocks[blockKey]) {
+                    blocks[blockKey] = {};
                 }
+                
+                if (!blocks[blockKey][rule.match_type]) {
+                    blocks[blockKey][rule.match_type] = [];
+                }
+                blocks[blockKey][rule.match_type].push(rule.match_value);
+            }
+            
+            // Convert include blocks to array
+            const includeKeys = Object.keys(includeBlocks).sort((a, b) => {
+                const aIndex = parseInt(a.split('_')[1]);
+                const bIndex = parseInt(b.split('_')[1]);
+                return aIndex - bIndex;
+            });
+            for (const key of includeKeys) {
+                include.push(includeBlocks[key]);
+            }
+            
+            // Convert exclude blocks to array
+            const excludeKeys = Object.keys(excludeBlocks).sort((a, b) => {
+                const aIndex = parseInt(a.split('_')[1]);
+                const bIndex = parseInt(b.split('_')[1]);
+                return aIndex - bIndex;
+            });
+            for (const key of excludeKeys) {
+                exclude.push(excludeBlocks[key]);
             }
 
             formattedGroups.push({
                 name: group.name,
-                include: include.length > 0 ? include : undefined,
-                exclude: exclude.length > 0 ? exclude : undefined
+                include: include.length > 0 ? include : [],
+                exclude: exclude.length > 0 ? exclude : []
             });
         }
 

@@ -1174,7 +1174,8 @@
                 } else if (isAvailable) {
                     button.className = 'tag-btn tag-btn-inactive';
                 } else {
-                    button.className = 'tag-btn tag-btn-hidden';
+                    // Show all groups, even if they have no matches (grayed out style)
+                    button.className = 'tag-btn tag-btn-inactive opacity-50';
                 }
             }
         }
