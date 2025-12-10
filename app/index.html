@@ -142,7 +142,117 @@
     </div>
     <!-- End Confirmation Modal -->
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="login-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="login-modal-title">Login</h3>
+            <form id="login-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="login-username" class="block text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="login-username" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="login-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="login-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button type="button" id="show-register-btn" class="text-blue-400 hover:text-blue-300 text-sm">Need an account? Register</button>
+                    <div class="flex gap-3">
+                        <button type="button" id="login-cancel-btn" class="btn btn-gray">Cancel</button>
+                        <button type="submit" id="login-submit-btn" class="btn btn-blue">Login</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Login Modal -->
 
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="register-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="register-modal-title">Register</h3>
+            <form id="register-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="register-username" class="block text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="register-username" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">3-50 characters, letters, numbers, underscores, and hyphens only</p>
+                    </div>
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-gray-300">Email</label>
+                        <input type="email" id="register-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="register-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">At least 8 characters with uppercase, lowercase, and number</p>
+                    </div>
+                    <div id="register-error" class="hidden text-red-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button type="button" id="show-login-btn" class="text-blue-400 hover:text-blue-300 text-sm">Already have an account? Login</button>
+                    <div class="flex gap-3">
+                        <button type="button" id="register-cancel-btn" class="btn btn-gray">Cancel</button>
+                        <button type="submit" id="register-submit-btn" class="btn btn-green">Register</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Register Modal -->
+
+    <!-- Auth Status Bar -->
+    <div id="auth-bar" class="hidden bg-gray-800 border-b border-gray-700 p-4">
+        <div class="container max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <span class="text-gray-300">Logged in as: <strong id="auth-username" class="text-white"></strong></span>
+            </div>
+            <div class="flex gap-2">
+                <button id="change-password-btn" class="btn btn-gray text-sm">Change Password</button>
+                <button id="logout-btn" class="btn btn-gray text-sm">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="change-password-modal-title" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 class="text-lg font-medium leading-6 text-white mb-4" id="change-password-modal-title">Change Password</h3>
+            <form id="change-password-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
+                        <input type="password" id="current-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="new-password" class="block text-sm font-medium text-gray-300">New Password</label>
+                        <input type="password" id="new-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-400">At least 8 characters with uppercase, lowercase, and number</p>
+                    </div>
+                    <div>
+                        <label for="confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                        <input type="password" id="confirm-password" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="change-password-error" class="hidden text-red-400 text-sm"></div>
+                    <div id="change-password-success" class="hidden text-green-400 text-sm"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" id="change-password-cancel-btn" class="btn btn-gray">Cancel</button>
+                    <button type="submit" id="change-password-submit-btn" class="btn btn-blue">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Change Password Modal -->
+
+    <!-- Main App Container (hidden until authenticated) -->
+    <div id="app-wrapper" class="hidden">
     <div class="container max-w-7xl mx-auto p-4 md:p-8">
         
         <header class="mb-8">
@@ -242,6 +352,7 @@
         </div> <!-- End 2-column grid -->
 
     </div>
+    </div> <!-- End app-wrapper -->
 
     <script>
         // Store the parsed data globally
@@ -261,6 +372,10 @@
         let tagButtonElements = {};
         let groupButtonElements = {};
 
+        // === Authentication State ===
+        let isAuthenticated = false;
+        let currentUser = null;
+
         // === API Helper ===
         /**
          * Generic helper for making API requests to the backend
@@ -273,6 +388,7 @@
             const options = {
                 method,
                 headers: {},
+                credentials: 'include' // Include cookies for session
             };
 
             if (body) {
@@ -283,8 +399,20 @@
             try {
                 const response = await fetch(endpoint, options);
                 
+                // Handle 401 Unauthorized
+                if (response.status === 401) {
+                    isAuthenticated = false;
+                    showLoginModal();
+                    throw new Error('Authentication required');
+                }
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({}));
+                    // Handle validation errors with details
+                    if (errorData.details && Array.isArray(errorData.details)) {
+                        const errorMessages = errorData.details.map(d => d.msg || d.message).join(', ');
+                        throw new Error(errorMessages || errorData.error || `Server error: ${response.status}`);
+                    }
                     throw new Error(errorData.error || `Server error: ${response.status}`);
                 }
                 
@@ -303,9 +431,246 @@
                 return { message: 'Operation successful.' }; // For other success codes like 204
             } catch (error) {
                 console.error(`API request failed: ${method} ${endpoint}`, error);
-                showGlobalError(error.message);
+                if (error.message !== 'Authentication required') {
+                    showGlobalError(error.message);
+                }
                 throw error; // Re-throw to stop promise chain
             }
+        }
+
+        // === Authentication Functions ===
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/me', { credentials: 'include' });
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    isAuthenticated = true;
+                    currentUser = data.user;
+                    showApp();
+                    // Load data after authentication is confirmed
+                    await loadAndRenderLinks();
+                } else {
+                    isAuthenticated = false;
+                    showLoginModal();
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                isAuthenticated = false;
+                showLoginModal();
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorEl.textContent = data.error || 'Login failed';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success
+                isAuthenticated = true;
+                currentUser = data.user;
+                hideLoginModal();
+                showApp();
+                await loadAndRenderLinks();
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const errorEl = document.getElementById('register-error');
+            const submitBtn = document.getElementById('register-submit-btn');
+
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Registration failed');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success - auto login
+                hideRegisterModal();
+                document.getElementById('login-username').value = username;
+                document.getElementById('login-password').value = password;
+                await handleLogin({ preventDefault: () => {} });
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            isAuthenticated = false;
+            currentUser = null;
+            showLoginModal();
+        }
+
+        function showChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('modal-hidden');
+            document.getElementById('change-password-modal').classList.add('modal-visible');
+            document.getElementById('change-password-form').reset();
+            document.getElementById('change-password-error').classList.add('hidden');
+            document.getElementById('change-password-success').classList.add('hidden');
+        }
+
+        function hideChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('modal-hidden');
+            document.getElementById('change-password-modal').classList.remove('modal-visible');
+        }
+
+        async function handleChangePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const errorEl = document.getElementById('change-password-error');
+            const successEl = document.getElementById('change-password-success');
+            const submitBtn = document.getElementById('change-password-submit-btn');
+
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            // Client-side validation
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'New passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                errorEl.textContent = 'New password must be at least 8 characters';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+            if (!passwordRegex.test(newPassword)) {
+                errorEl.textContent = 'New password must contain at least one uppercase letter, one lowercase letter, and one number';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Changing...';
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.details ? data.details.map(d => d.msg).join(', ') : (data.error || 'Failed to change password');
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Success
+                successEl.textContent = 'Password changed successfully!';
+                successEl.classList.remove('hidden');
+                document.getElementById('change-password-form').reset();
+                
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    hideChangePasswordModal();
+                }, 2000);
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Change Password';
+            }
+        }
+
+        function showLoginModal() {
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('auth-bar').classList.add('hidden');
+            document.getElementById('login-modal').classList.remove('modal-hidden');
+            document.getElementById('login-modal').classList.add('modal-visible');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('login-modal').classList.add('modal-hidden');
+            document.getElementById('login-modal').classList.remove('modal-visible');
+        }
+
+        function showRegisterModal() {
+            hideLoginModal();
+            document.getElementById('register-modal').classList.remove('modal-hidden');
+            document.getElementById('register-modal').classList.add('modal-visible');
+        }
+
+        function hideRegisterModal() {
+            document.getElementById('register-modal').classList.add('modal-hidden');
+            document.getElementById('register-modal').classList.remove('modal-visible');
+        }
+
+        function showApp() {
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.getElementById('auth-bar').classList.remove('hidden');
+            if (currentUser) {
+                document.getElementById('auth-username').textContent = currentUser.username;
+            }
+            hideLoginModal();
+            hideRegisterModal();
         }
 
         /**
@@ -411,8 +776,34 @@
         
         // === Event Listeners ===
         document.addEventListener('DOMContentLoaded', () => {
-            loadAndRenderLinks();
+            // Check authentication status first
+            checkAuthStatus();
+
+            // Auth modal listeners
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+            document.getElementById('login-cancel-btn').addEventListener('click', () => {
+                if (!isAuthenticated) {
+                    // Can't cancel if not authenticated
+                    return;
+                }
+                hideLoginModal();
+            });
+            document.getElementById('register-cancel-btn').addEventListener('click', () => {
+                hideRegisterModal();
+                showLoginModal();
+            });
+            document.getElementById('show-register-btn').addEventListener('click', showRegisterModal);
+            document.getElementById('show-login-btn').addEventListener('click', () => {
+                hideRegisterModal();
+                showLoginModal();
+            });
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            document.getElementById('change-password-btn').addEventListener('click', showChangePasswordModal);
+            document.getElementById('change-password-form').addEventListener('submit', handleChangePassword);
+            document.getElementById('change-password-cancel-btn').addEventListener('click', hideChangePasswordModal);
             
+            // App listeners (only work when authenticated)
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
             document.getElementById('group-pills-container').addEventListener('click', handleGroupClick);
@@ -453,6 +844,11 @@
             const errorMsgEl = document.getElementById('error-message');
             const appEl = document.getElementById('app-container');
 
+            // Show loading state
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            appEl.classList.add('hidden');
+
             const searchInput = document.getElementById('search-bar');
             const sortSelect = document.getElementById('sort-select');
 
@@ -463,10 +859,25 @@
             activeGroups = new Set(JSON.parse(localStorage.getItem('tabinatorGroups') || '[]'));
 
             // Apply restored values to inputs
-            searchInput.value = currentQuery;
-            sortSelect.value = currentSort;
+            if (searchInput) searchInput.value = currentQuery;
+            if (sortSelect) sortSelect.value = currentSort;
 
             try {
+                // Check authentication first
+                if (!isAuthenticated) {
+                    // Try to check auth status
+                    const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
+                    const authData = await authResponse.json();
+                    if (!authData.authenticated) {
+                        loadingEl.classList.add('hidden');
+                        showLoginModal();
+                        return;
+                    }
+                    isAuthenticated = true;
+                    currentUser = authData.user;
+                    showApp(); // Make sure app is shown if we just authenticated
+                }
+
                 // 1. Fetch the data from the API
                 linkData = await apiRequest('/api/data', 'GET');
 
@@ -508,19 +919,41 @@
                 renderApp(); 
 
                 // 6. Update UI state
-                appEl.classList.remove('hidden'); // This is now the <main> element
+                loadingEl.classList.add('hidden'); // Hide loading
+                errorEl.classList.add('hidden'); // Hide any previous errors
+                appEl.classList.remove('hidden'); // Show the main content
 
-                // 7. Add event listeners
-                searchInput.addEventListener('input', handleSearch);
-                sortSelect.addEventListener('change', handleSort);
+                // 7. Add event listeners (use one-time flag to avoid duplicates)
+                // Get fresh references after potential DOM updates
+                const finalSearchInput = document.getElementById('search-bar');
+                const finalSortSelect = document.getElementById('sort-select');
+                
+                // Remove existing listeners by cloning
+                if (finalSearchInput) {
+                    const newSearchInput = finalSearchInput.cloneNode(true);
+                    finalSearchInput.parentNode.replaceChild(newSearchInput, finalSearchInput);
+                    newSearchInput.value = currentQuery;
+                    newSearchInput.addEventListener('input', handleSearch);
+                }
+                
+                if (finalSortSelect) {
+                    const newSortSelect = finalSortSelect.cloneNode(true);
+                    finalSortSelect.parentNode.replaceChild(newSortSelect, finalSortSelect);
+                    newSortSelect.value = currentSort;
+                    newSortSelect.addEventListener('change', handleSort);
+                }
 
             } catch (error) {
                 console.error("Error loading links:", error);
+                loadingEl.classList.add('hidden');
                 errorMsgEl.textContent = error.message;
                 errorEl.classList.remove('hidden');
-            } finally {
-                // NEW: This will ALWAYS run, ensuring the spinner is hidden
-                loadingEl.classList.add('hidden');
+                
+                // If it's an auth error, show login modal
+                if (error.message === 'Authentication required' || error.message.includes('401')) {
+                    isAuthenticated = false;
+                    showLoginModal();
+                }
             }
         }
         
@@ -690,7 +1123,7 @@
                 });
             }
             
-            // 4. Calculate available tags and groups
+            // 4. Calculate available groups from tag-filtered links
             const availableGroups = new Set();
             const allGroupDefs = linkData.groups || [];
             tagsFilteredLinks.forEach(link => {
@@ -702,18 +1135,47 @@
                 });
             });
 
-            let groupsFilteredLinks = [...searchFilteredLinks];
+            // 5. Calculate available tags
+            // Available tags = tags that appear in links matching: search + groups + active tags
+            // For each tag, check if it appears in links that match all current filters
+            const availableTags = new Set();
+            
+            // Start with search-filtered links
+            let baseForTags = [...searchFilteredLinks];
+            
+            // Apply group filtering if groups are active
             if (activeGroups.size > 0) {
-                 const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
-                 groupsFilteredLinks = searchFilteredLinks.filter(link => {
+                const activeGroupDefs = linkData.groups.filter(g => activeGroups.has(g.name));
+                baseForTags = baseForTags.filter(link => {
                     return activeGroupDefs.some(groupDef => linkMatchesGroup(link, groupDef));
                 });
             }
-
-            const availableTags = new Set();
-            groupsFilteredLinks.forEach(link => {
-                link.tags?.forEach(tag => availableTags.add(tag));
-            });
+            
+            // For each tag, check if it appears in links matching the current active tags
+            // (or all links if no tags are active)
+            for (const tag of allTags) {
+                let linksToCheck = [...baseForTags];
+                
+                // If there are active tags, filter by them (excluding the tag we're checking)
+                if (activeTags.size > 0) {
+                    const otherActiveTags = Array.from(activeTags).filter(t => t !== tag);
+                    if (otherActiveTags.length > 0) {
+                        linksToCheck = linksToCheck.filter(link => {
+                            if (!link.tags || !Array.isArray(link.tags)) return false;
+                            return otherActiveTags.every(activeTag => link.tags.includes(activeTag));
+                        });
+                    }
+                }
+                
+                // Check if this tag appears in any of the filtered links
+                const tagAppears = linksToCheck.some(link => 
+                    link.tags && Array.isArray(link.tags) && link.tags.includes(tag)
+                );
+                
+                if (tagAppears) {
+                    availableTags.add(tag);
+                }
+            }
             
             // 5. Update the tag and group pill UI
             updateTagPills(availableTags);
@@ -936,15 +1398,27 @@
             const originalUrl = formOriginalUrl.value;
             
             const link = {
-                name: formName.value,
-                url: formUrl.value,
+                name: formName.value.trim(),
+                url: formUrl.value.trim(),
                 tags: formTags.value.split(',')
                                  .map(tag => tag.trim())
                                  .filter(tag => tag.length > 0)
             };
             
+            // Basic client-side validation
+            if (!link.name || link.name.length === 0) {
+                showGlobalError('Name is required');
+                return;
+            }
+            if (!link.url || link.url.length === 0) {
+                showGlobalError('URL is required');
+                return;
+            }
+            
             // Disable button
-            document.getElementById('modal-save-btn').disabled = true;
+            const saveBtn = document.getElementById('modal-save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
 
             try {
                 if (originalUrl) {
@@ -960,9 +1434,11 @@
             } catch (error) {
                 // Error is already shown by apiRequest helper
                 console.error("Failed to save link:", error);
+                // Don't hide modal on error so user can fix it
             } finally {
                 // Re-enable button
-                document.getElementById('modal-save-btn').disabled = false;
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
             }
         }
 

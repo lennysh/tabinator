@@ -1,3 +1,79 @@
+# Dependencies
+node_modules/
+
+# Database (user data - should NOT be committed)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# User data files (personal links - should NOT be committed)
+app/links.yaml
+app/links*.yaml
+**/links.yaml
+**/links*.yaml
+
+# Environment variables (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Temporary/backup files
+*.tmp
+*.bak
+*.backup
+*~
+*.orig
+
+# Ignore patterns (user-specific ignore files)
 ignore_*
-links.yaml
+**/ignore_*
+
+# Shell scripts (user-specific deployment scripts - but keep scripts/ directory)
 *.sh
+!scripts/*.sh
+
+# Duplicate extension directories (if accidentally created)
+extension/extension/
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Session storage (if using file-based sessions)
+sessions/
