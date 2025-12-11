@@ -163,30 +163,20 @@ async function checkLinkExists(url, apiUrl) {
         
         showDebug(`Found ${data.links.length} links, searching...`);
         
-        // SIMPLEST POSSIBLE CHECK - just search for the URL string
+        // Search for the URL using multiple matching strategies (in order of strictness)
         const searchUrl = url.trim();
         showDebug(`Searching for: ${searchUrl.substring(0, 40)}...`);
         
-        // Try multiple matching strategies
-        let existingLink = null;
-        
         // Strategy 1: Exact match
-        console.log('Trying exact match...');
-        existingLink = data.links.find(link => {
+        let existingLink = data.links.find(link => {
             if (!link.url) return false;
-            const trimmed = link.url.trim();
-            const matches = trimmed === searchUrl;
-            if (matches) {
-                console.log('EXACT MATCH FOUND!', link);
-            }
-            return matches;
+            return link.url.trim() === searchUrl;
         });
         if (existingLink) {
-            showDebug(`✓ Found: "${existingLink.name}"`);
-            console.log('RETURNING:', existingLink);
+            showDebug(`✓ Found (exact): "${existingLink.name}"`);
+            console.log('EXACT MATCH:', existingLink);
             return existingLink;
         }
-        console.log('Exact match failed, trying case-insensitive...');
         
         // Strategy 2: Case-insensitive match
         const searchUrlLower = searchUrl.toLowerCase();
@@ -196,11 +186,11 @@ async function checkLinkExists(url, apiUrl) {
         });
         if (existingLink) {
             showDebug(`✓ Found (case-insensitive): "${existingLink.name}"`);
-            console.log('FOUND via case-insensitive match:', existingLink);
+            console.log('CASE-INSENSITIVE MATCH:', existingLink);
             return existingLink;
         }
         
-        // Strategy 3: Normalized match
+        // Strategy 3: Normalized match (handles trailing slashes, etc.)
         const normalizedSearchUrl = normalizeUrl(searchUrl);
         existingLink = data.links.find(link => {
             if (!link.url) return false;
@@ -209,19 +199,20 @@ async function checkLinkExists(url, apiUrl) {
         });
         if (existingLink) {
             showDebug(`✓ Found (normalized): "${existingLink.name}"`);
-            console.log('FOUND via normalized match:', existingLink);
+            console.log('NORMALIZED MATCH:', existingLink);
             return existingLink;
         }
         
-        // Strategy 4: Contains match (for URLs with query params, etc.)
+        // Strategy 4: Case-insensitive normalized match
+        const normalizedSearchUrlLower = normalizedSearchUrl.toLowerCase();
         existingLink = data.links.find(link => {
             if (!link.url) return false;
-            const linkUrl = link.url.trim();
-            return linkUrl.includes(searchUrl) || searchUrl.includes(linkUrl);
+            const normalizedLinkUrl = normalizeUrl(link.url.trim()).toLowerCase();
+            return normalizedLinkUrl === normalizedSearchUrlLower;
         });
         if (existingLink) {
-            showDebug(`✓ Found (contains match): "${existingLink.name}"`);
-            console.log('FOUND via contains match:', existingLink);
+            showDebug(`✓ Found (normalized, case-insensitive): "${existingLink.name}"`);
+            console.log('NORMALIZED CASE-INSENSITIVE MATCH:', existingLink);
             return existingLink;
         }
         
@@ -229,59 +220,11 @@ async function checkLinkExists(url, apiUrl) {
         console.log('=== COMPARISON FAILED ===');
         console.log('Search URL:', JSON.stringify(searchUrl));
         console.log('Search URL length:', searchUrl.length);
+        console.log('Normalized Search URL:', normalizedSearchUrl);
         if (data.links.length > 0) {
             console.log('First link URL:', JSON.stringify(data.links[0].url));
             console.log('First link URL length:', data.links[0].url ? data.links[0].url.length : 'null');
             console.log('Are they equal?', data.links[0].url === searchUrl);
-            
-            // Try to find a similar URL
-            const similar = data.links.find(link => {
-                if (!link.url) return false;
-                const linkUrl = link.url.trim().toLowerCase();
-                const searchLower = searchUrlLower;
-                // Check if they share a significant portion
-                const minLength = Math.min(linkUrl.length, searchLower.length);
-                if (minLength < 20) return false;
-                const commonStart = linkUrl.substring(0, 30) === searchLower.substring(0, 30);
-                return commonStart;
-            });
-            if (similar) {
-                console.log('Found similar URL:', similar.url);
-                showDebug(`Similar URL found: ${similar.url.substring(0, 40)}...`);
-            }
-        }
-        
-        // If no exact match, try normalized comparison
-        if (!existingLink) {
-            console.log('No exact match, trying normalized comparison...');
-            existingLink = data.links.find(link => {
-                const normalizedLinkUrl = normalizeUrl(link.url);
-                const matches = normalizedLinkUrl === normalizedSearchUrl;
-                if (matches) {
-                    console.log('✓ NORMALIZED MATCH FOUND!');
-                    console.log('  Search URL:', normalizedSearchUrl);
-                    console.log('  Link URL:', link.url);
-                    console.log('  Normalized Link URL:', normalizedLinkUrl);
-                }
-                return matches;
-            });
-        }
-        
-        // If still no match, try case-insensitive comparison
-        if (!existingLink) {
-            console.log('No normalized match, trying case-insensitive comparison...');
-            const searchUrlLower = normalizedSearchUrl.toLowerCase();
-            existingLink = data.links.find(link => {
-                const normalizedLinkUrl = normalizeUrl(link.url).toLowerCase();
-                const matches = normalizedLinkUrl === searchUrlLower;
-                if (matches) {
-                    console.log('✓ CASE-INSENSITIVE MATCH FOUND!');
-                    console.log('  Search URL (lower):', searchUrlLower);
-                    console.log('  Link URL:', link.url);
-                    console.log('  Normalized Link URL (lower):', normalizedLinkUrl);
-                }
-                return matches;
-            });
         }
         
         if (existingLink) {
@@ -292,21 +235,7 @@ async function checkLinkExists(url, apiUrl) {
             console.log('✗ FINAL RESULT: Link not found');
             console.log('Searching for:', url);
             console.log('Normalized:', normalizedSearchUrl);
-            // Check if any URLs are similar (for debugging)
-            const similarUrls = data.links.filter(link => {
-                const linkNorm = normalizeUrl(link.url).toLowerCase();
-                const searchNorm = normalizedSearchUrl.toLowerCase();
-                return linkNorm.includes(searchNorm.substring(0, 30)) || searchNorm.includes(linkNorm.substring(0, 30));
-            });
-            if (similarUrls.length > 0) {
-                console.log('Similar URLs found (might be a match issue):');
-                similarUrls.forEach(link => {
-                    console.log(`  "${link.name}": ${link.url}`);
-                });
-                showDebug(`Found ${similarUrls.length} similar URLs but no exact match`);
-            } else {
-                showDebug(`No match found in ${data.links.length} links`);
-            }
+            showDebug(`No match found in ${data.links.length} links`);
         }
         console.log('=== END URL CHECK ===');
         
