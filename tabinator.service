@@ -1,0 +1,25 @@
+[Unit]
+Description=Tabinator - Self-hosted tab dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/tabinator
+Environment="NODE_ENV=production"
+Environment="PORT=8080"
+Environment="SESSION_SECRET=change-this-secret-in-production"
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tabinator
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
