@@ -325,3 +325,8 @@ This section tracks testing status for various bookmark import/export formats.
 - Exclude blocks use OR logic (any match excludes the link)
 - Within each block, Tags/Names/URLs use OR logic
 - Check the info box in the group edit modal for detailed logic explanation
+
+## To Do
+
+- [ ] Change Import/Export `Tabinator CSV` to `Generic CSV`
+- [ ] Add new Import/Export format for `Tabinator (JSON)` that supports both links AND groups
