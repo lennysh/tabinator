@@ -262,6 +262,46 @@ When importing:
 - New links are created
 - Tags are merged (existing tags are replaced with imported tags)
 
+## Testing Import/Export Formats
+
+This section tracks testing status for various bookmark import/export formats.
+
+### Import Formats
+
+- [x] **Tabinator CSV** - ✅ Tested and working
+- [x] **Chrome Bookmarks (HTML)** - ✅ Tested and working
+- [ ] **Firefox Bookmarks (JSON)**
+- [ ] **Edge Bookmarks (HTML)**
+- [ ] **Safari Bookmarks (HTML)**
+- [ ] **Opera Bookmarks (HTML)**
+- [x] **Netscape/Generic HTML** - ✅ Tested and working
+
+### Export Formats
+
+- [x] **Tabinator CSV** - ✅ Tested and working
+- [ ] **Chrome Bookmarks (HTML)**
+- [ ] **Firefox Bookmarks (JSON)**
+- [ ] **Edge Bookmarks (HTML)**
+- [ ] **Safari Bookmarks (HTML)**
+- [ ] **Opera Bookmarks (HTML)**
+- [ ] **Netscape/Generic HTML**
+
+### Testing Instructions
+
+1. **For Import Testing:**
+   - Export bookmarks from the source browser/format
+   - Use the Import feature in Settings → Export/Import tab
+   - Select the appropriate format from the dropdown
+   - Upload the exported file
+   - Verify all bookmarks are imported correctly with proper names, URLs, and tags (if available)
+
+2. **For Export Testing:**
+   - Use the Export feature in Settings → Export/Import tab
+   - Select the format from the dropdown
+   - Download the exported file
+   - Import the file back into the corresponding browser
+   - Verify all bookmarks are imported correctly with proper names, URLs, and tags
+
 ## Troubleshooting
 
 ### Can't login after migration
@@ -285,3 +325,8 @@ When importing:
 - Exclude blocks use OR logic (any match excludes the link)
 - Within each block, Tags/Names/URLs use OR logic
 - Check the info box in the group edit modal for detailed logic explanation
+
+## To Do
+
+- [ ] Change Import/Export `Tabinator CSV` to `Generic CSV`
+- [ ] Add new Import/Export format for `Tabinator (JSON)` that supports both links AND groups

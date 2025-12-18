@@ -91,6 +91,17 @@
             @apply hidden;
         }
         
+        /* Settings tab styling */
+        .settings-tab {
+            @apply transition-colors duration-150;
+        }
+        .settings-tab.active {
+            @apply text-blue-400 border-blue-400;
+        }
+        .settings-tab-content {
+            @apply min-h-[300px];
+        }
+        
         /* Styling for link items to show admin buttons */
         .link-item .link-content {
             @apply w-10/12;
@@ -260,79 +271,124 @@
     <!-- Settings Modal -->
     <div id="admin-settings-modal" class="modal-hidden fixed inset-0 overflow-hidden" aria-labelledby="admin-settings-modal-title" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 90vw; width: 600px;">
+        <div class="modal-content" style="max-width: 90vw; width: 500px; max-height: 90vh; overflow-y: auto;">
             <h3 class="text-lg font-medium leading-6 text-white mb-4" id="admin-settings-modal-title">Settings</h3>
+            
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-600 mb-4">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button type="button" class="settings-tab active px-3 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-400" data-tab="profile">
+                        Profile
+                    </button>
+                    <button type="button" class="settings-tab px-3 py-2 text-sm font-medium text-gray-400 hover:text-gray-300 border-b-2 border-transparent" data-tab="export-import">
+                        Export/Import
+                    </button>
+                    <button type="button" class="settings-tab px-3 py-2 text-sm font-medium text-gray-400 hover:text-gray-300 border-b-2 border-transparent" data-tab="security">
+                        Security
+                    </button>
+                </nav>
+            </div>
+            
             <form id="admin-settings-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="admin-username" class="block text-sm font-medium text-gray-300">Username</label>
-                        <input type="text" id="admin-username" readonly class="mt-1 block w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-gray-400 cursor-not-allowed" />
-                        <p class="mt-1 text-xs text-gray-400">Username cannot be changed</p>
-                    </div>
-                    
-                    <div>
-                        <label for="admin-email" class="block text-sm font-medium text-gray-300">Email Address</label>
-                        <input type="email" id="admin-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                        <p class="mt-1 text-xs text-gray-400">You can use your email or username to login</p>
-                    </div>
-                    
-                    <div>
-                        <label for="admin-max-tabs" class="block text-sm font-medium text-gray-300">Max Tabs Open Limit</label>
-                        <input type="number" id="admin-max-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                        <p class="mt-1 text-xs text-gray-400">Safety limit for opening multiple tabs at once (1-1000)</p>
-                    </div>
-                    
-                    <div class="border-t border-gray-600 pt-4 mt-4">
-                        <h4 class="text-sm font-medium text-gray-300 mb-3">Export & Import</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <button type="button" id="export-links-btn" class="btn btn-green text-sm w-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    Export Links to CSV
-                                </button>
-                                <p class="mt-1 text-xs text-gray-400">Download all your links as a CSV file</p>
-                            </div>
-                            <div>
-                                <label for="import-file-input" class="block text-sm font-medium text-gray-300 mb-2">Import Links from CSV</label>
-                                <input type="file" id="import-file-input" accept=".csv" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
-                                <button type="button" id="import-links-btn" class="btn btn-blue text-sm w-full mt-2" disabled>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                                    Import Links
-                                </button>
-                                <p class="mt-1 text-xs text-gray-400">Merge CSV file with existing links (updates existing, adds new)</p>
-                                <div id="import-status" class="hidden mt-2 text-sm"></div>
-                            </div>
+                <!-- Profile Tab -->
+                <div id="settings-tab-profile" class="settings-tab-content">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="admin-username" class="block text-sm font-medium text-gray-300">Username</label>
+                            <input type="text" id="admin-username" readonly class="mt-1 block w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-gray-400 cursor-not-allowed" />
+                            <p class="mt-1 text-xs text-gray-400">Username cannot be changed</p>
                         </div>
-                    </div>
-                    
-                    <div class="border-t border-gray-600 pt-4 mt-4">
-                        <h4 class="text-sm font-medium text-gray-300 mb-3">Change Password</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="admin-current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
-                                <input type="password" id="admin-current-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
-                            <div>
-                                <label for="admin-new-password" class="block text-sm font-medium text-gray-300">New Password</label>
-                                <input type="password" id="admin-new-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                                <p class="mt-1 text-xs text-gray-400">Must be at least 8 characters with uppercase, lowercase, and a number</p>
-                            </div>
-                            <div>
-                                <label for="admin-confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
-                                <input type="password" id="admin-confirm-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
-                            <button type="button" id="admin-change-password-btn" class="btn btn-gray text-sm">Change Password</button>
-                            <div id="admin-password-error" class="hidden text-red-400 text-sm"></div>
-                            <div id="admin-password-success" class="hidden text-green-400 text-sm"></div>
+                        
+                        <div>
+                            <label for="admin-email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                            <input type="email" id="admin-email" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="mt-1 text-xs text-gray-400">You can use your email or username to login</p>
                         </div>
+                        
+                        <div>
+                            <label for="admin-max-tabs" class="block text-sm font-medium text-gray-300">Max Tabs Open Limit</label>
+                            <input type="number" id="admin-max-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="mt-1 text-xs text-gray-400">Safety limit for opening multiple tabs at once (1-1000)</p>
+                        </div>
+                        
+                        <div id="admin-settings-error" class="hidden text-red-400 text-sm"></div>
+                        <div id="admin-settings-success" class="hidden text-green-400 text-sm"></div>
                     </div>
-                    
-                    <div id="admin-settings-error" class="hidden text-red-400 text-sm"></div>
-                    <div id="admin-settings-success" class="hidden text-green-400 text-sm"></div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Cancel</button>
+                        <button type="submit" id="admin-settings-submit-btn" class="btn btn-blue">Save Settings</button>
+                    </div>
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Cancel</button>
-                    <button type="submit" id="admin-settings-submit-btn" class="btn btn-blue">Save Settings</button>
+                
+                <!-- Export/Import Tab -->
+                <div id="settings-tab-export-import" class="settings-tab-content hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="export-format-select" class="block text-sm font-medium text-gray-300 mb-2">Export Format</label>
+                            <select id="export-format-select" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-3">
+                                <option value="csv">Tabinator CSV</option>
+                                <option value="chrome">Chrome Bookmarks (HTML)</option>
+                                <option value="firefox">Firefox Bookmarks (JSON)</option>
+                                <option value="edge">Edge Bookmarks (HTML)</option>
+                                <option value="safari">Safari Bookmarks (HTML)</option>
+                                <option value="opera">Opera Bookmarks (HTML)</option>
+                                <option value="netscape">Netscape/Generic HTML</option>
+                            </select>
+                            <button type="button" id="export-links-btn" class="btn btn-green text-sm w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                Export Links
+                            </button>
+                            <p class="mt-1 text-xs text-gray-400">Download all your links in the selected format</p>
+                        </div>
+                        <div>
+                            <label for="import-format-select" class="block text-sm font-medium text-gray-300 mb-2">Import Format</label>
+                            <select id="import-format-select" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-3">
+                                <option value="csv">Tabinator CSV</option>
+                                <option value="chrome">Chrome Bookmarks (HTML)</option>
+                                <option value="firefox">Firefox Bookmarks (JSON)</option>
+                                <option value="edge">Edge Bookmarks (HTML)</option>
+                                <option value="safari">Safari Bookmarks (HTML)</option>
+                                <option value="opera">Opera Bookmarks (HTML)</option>
+                                <option value="netscape">Netscape/Generic HTML</option>
+                            </select>
+                            <label for="import-file-input" class="block text-sm font-medium text-gray-300 mb-2">Import File</label>
+                            <input type="file" id="import-file-input" accept=".csv,.html,.json" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
+                            <button type="button" id="import-links-btn" class="btn btn-blue text-sm w-full mt-2" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                Import Links
+                            </button>
+                            <p class="mt-1 text-xs text-gray-400">Merge file with existing links (updates existing, adds new)</p>
+                            <div id="import-status" class="hidden mt-2 text-sm"></div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Close</button>
+                    </div>
+                </div>
+                
+                <!-- Security Tab -->
+                <div id="settings-tab-security" class="settings-tab-content hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="admin-current-password" class="block text-sm font-medium text-gray-300">Current Password</label>
+                            <input type="password" id="admin-current-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label for="admin-new-password" class="block text-sm font-medium text-gray-300">New Password</label>
+                            <input type="password" id="admin-new-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="mt-1 text-xs text-gray-400">Must be at least 8 characters with uppercase, lowercase, and a number</p>
+                        </div>
+                        <div>
+                            <label for="admin-confirm-password" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                            <input type="password" id="admin-confirm-password" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <button type="button" id="admin-change-password-btn" class="btn btn-gray text-sm">Change Password</button>
+                        <div id="admin-password-error" class="hidden text-red-400 text-sm"></div>
+                        <div id="admin-password-success" class="hidden text-green-400 text-sm"></div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button type="button" id="admin-settings-cancel-btn" class="btn btn-gray">Close</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -918,6 +974,9 @@
                 errorEl.classList.remove('hidden');
             }
             
+            // Reset to profile tab when opening
+            switchSettingsTab('profile');
+            
             modal.classList.remove('modal-hidden');
             modal.classList.add('modal-visible');
         }
@@ -925,6 +984,34 @@
         function hideAdminSettingsModal() {
             document.getElementById('admin-settings-modal').classList.add('modal-hidden');
             document.getElementById('admin-settings-modal').classList.remove('modal-visible');
+            // Reset to profile tab when closing
+            switchSettingsTab('profile');
+        }
+        
+        function switchSettingsTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.settings-tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.remove('active', 'text-blue-400', 'border-blue-400');
+                tab.classList.add('text-gray-400', 'border-transparent');
+            });
+            
+            // Show selected tab content
+            const targetContent = document.getElementById(`settings-tab-${tabName}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+            
+            // Activate selected tab
+            const targetTab = document.querySelector(`.settings-tab[data-tab="${tabName}"]`);
+            if (targetTab) {
+                targetTab.classList.add('active', 'text-blue-400', 'border-blue-400');
+                targetTab.classList.remove('text-gray-400', 'border-transparent');
+            }
         }
 
         async function handleAdminSettingsSubmit(event) {
@@ -1070,60 +1157,181 @@
 
         async function handleExportLinks() {
             try {
-                const response = await fetch('/api/export', {
+                const formatSelect = document.getElementById('export-format-select');
+                const format = formatSelect ? formatSelect.value : 'csv';
+                
+                console.log('Exporting with format:', format);
+                
+                const response = await fetch(`/api/export?format=${encodeURIComponent(format)}`, {
                     method: 'GET',
                     credentials: 'include'
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to export links');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to export links');
                 }
+                
+                // Check content type to verify format
+                const contentType = response.headers.get('content-type');
+                console.log('Export response content-type:', contentType);
                 
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `tabinator-export-${new Date().toISOString().split('T')[0]}.csv`;
+                
+                // Set filename based on format
+                const date = new Date().toISOString().split('T')[0];
+                let filename = `tabinator-export-${date}`;
+                let extension = 'csv';
+                
+                if (format === 'firefox') {
+                    extension = 'json';
+                } else if (['chrome', 'edge', 'safari', 'opera', 'netscape'].includes(format)) {
+                    extension = 'html';
+                }
+                
+                a.download = `${filename}.${extension}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             } catch (error) {
                 console.error('Export error:', error);
-                alert('Failed to export links. Please try again.');
+                alert(`Failed to export links: ${error.message}`);
             }
         }
 
+        /**
+         * Parses HTML bookmark file (Netscape format used by Chrome, Edge, Safari, Opera)
+         */
+        function parseHtmlBookmarks(htmlContent) {
+            const links = [];
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const bookmarkElements = doc.querySelectorAll('a[href]');
+            
+            bookmarkElements.forEach(a => {
+                const url = a.getAttribute('href');
+                const name = a.textContent.trim();
+                const addDate = a.getAttribute('add_date');
+                const tags = a.getAttribute('tags');
+                
+                if (url && url.startsWith('http')) {
+                    links.push({
+                        name: name || 'Untitled',
+                        url: url,
+                        tags: tags ? tags.split(',') : [],
+                        created_at: addDate ? new Date(parseInt(addDate) * 1000).toISOString() : null
+                    });
+                }
+            });
+            
+            return links;
+        }
+        
+        /**
+         * Parses Firefox JSON bookmark file
+         */
+        function parseFirefoxBookmarks(jsonContent) {
+            const links = [];
+            
+            try {
+                const data = JSON.parse(jsonContent);
+                
+                function traverseBookmarks(node) {
+                    if (!node) return;
+                    
+                    if (node.type === 'text/x-moz-place' && node.uri) {
+                        // It's a bookmark
+                        if (node.uri.startsWith('http://') || node.uri.startsWith('https://')) {
+                            links.push({
+                                name: node.title || 'Untitled',
+                                url: node.uri,
+                                tags: node.tags ? node.tags.split(',') : [],
+                                created_at: node.dateAdded ? new Date(node.dateAdded).toISOString() : null
+                            });
+                        }
+                    }
+                    
+                    // Recursively process children
+                    if (node.children) {
+                        node.children.forEach(child => traverseBookmarks(child));
+                    }
+                }
+                
+                // Firefox bookmarks structure
+                if (data.children) {
+                    data.children.forEach(child => traverseBookmarks(child));
+                } else if (Array.isArray(data)) {
+                    data.forEach(item => traverseBookmarks(item));
+                }
+            } catch (error) {
+                throw new Error('Invalid Firefox bookmark JSON: ' + error.message);
+            }
+            
+            return links;
+        }
+        
         async function handleImportLinks() {
             const fileInput = document.getElementById('import-file-input');
+            const formatSelect = document.getElementById('import-format-select');
             const importBtn = document.getElementById('import-links-btn');
             const statusEl = document.getElementById('import-status');
             
             if (!fileInput.files || fileInput.files.length === 0) {
-                statusEl.textContent = 'Please select a CSV file';
+                statusEl.textContent = 'Please select a file';
                 statusEl.className = 'mt-2 text-sm text-red-400';
                 statusEl.classList.remove('hidden');
                 return;
             }
             
             const file = fileInput.files[0];
+            const format = formatSelect.value;
             const reader = new FileReader();
             
             reader.onload = async (e) => {
                 try {
-                    const csvData = e.target.result;
+                    const fileContent = e.target.result;
+                    let links = [];
+                    let csvData = null;
                     
                     importBtn.disabled = true;
-                    importBtn.textContent = 'Importing...';
-                    statusEl.textContent = 'Importing links...';
+                    importBtn.textContent = 'Parsing...';
+                    statusEl.textContent = 'Parsing file...';
                     statusEl.className = 'mt-2 text-sm text-blue-400';
                     statusEl.classList.remove('hidden');
+                    
+                    // Parse based on format
+                    if (format === 'csv') {
+                        csvData = fileContent;
+                    } else if (['chrome', 'edge', 'safari', 'opera', 'netscape'].includes(format)) {
+                        links = parseHtmlBookmarks(fileContent);
+                        if (links.length === 0) {
+                            throw new Error('No bookmarks found in HTML file');
+                        }
+                    } else if (format === 'firefox') {
+                        links = parseFirefoxBookmarks(fileContent);
+                        if (links.length === 0) {
+                            throw new Error('No bookmarks found in JSON file');
+                        }
+                    } else {
+                        throw new Error('Unsupported import format');
+                    }
+                    
+                    importBtn.textContent = 'Importing...';
+                    statusEl.textContent = `Importing ${links.length || 'links'}...`;
                     
                     const response = await fetch('/api/import', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
-                        body: JSON.stringify({ csvData })
+                        body: JSON.stringify({ 
+                            csvData,
+                            links: links.length > 0 ? links : undefined,
+                            format 
+                        })
                     });
                     
                     const data = await response.json();
@@ -1138,7 +1346,7 @@
                         message += `, ${data.skipped} skipped`;
                     }
                     if (data.errors && data.errors.length > 0) {
-                        message += `\nErrors: ${data.errors.length}`;
+                        message += ` (${data.errors.length} errors)`;
                         console.warn('Import errors:', data.errors);
                     }
                     
@@ -1349,12 +1557,28 @@
             if (adminSettingsForm) {
                 adminSettingsForm.addEventListener('submit', handleAdminSettingsSubmit);
             }
-            if (adminSettingsCancelBtn) {
-                adminSettingsCancelBtn.addEventListener('click', hideAdminSettingsModal);
+            // Use event delegation to handle all cancel/close buttons in the settings modal
+            const adminSettingsModal = document.getElementById('admin-settings-modal');
+            if (adminSettingsModal) {
+                adminSettingsModal.addEventListener('click', (e) => {
+                    if (e.target && e.target.id === 'admin-settings-cancel-btn') {
+                        hideAdminSettingsModal();
+                    }
+                });
             }
             if (adminChangePasswordBtn) {
                 adminChangePasswordBtn.addEventListener('click', handleAdminChangePassword);
             }
+            
+            // Settings tab switching
+            const settingsTabs = document.querySelectorAll('.settings-tab');
+            settingsTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetTab = tab.getAttribute('data-tab');
+                    switchSettingsTab(targetTab);
+                });
+            });
             
             // Export/Import
             const exportLinksBtn = document.getElementById('export-links-btn');

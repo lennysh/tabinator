@@ -362,12 +362,15 @@ router.delete('/links', requireAuth, async (req, res) => {
 
 /**
  * GET /api/export
- * Export all user links as CSV
+ * Export all user links in various formats (CSV, HTML bookmarks, Firefox JSON)
  */
 router.get('/export', requireAuth, async (req, res) => {
     const db = await getDatabase();
     try {
         const userId = req.userId;
+        const format = req.query.format || 'csv';
+        
+        console.log('Export request - format:', format, 'userId:', userId);
 
         // Get all links with their tags
         const links = await dbAll(
@@ -383,37 +386,116 @@ router.get('/export', requireAuth, async (req, res) => {
             [userId]
         );
 
-        // CSV header
-        const csvRows = ['name,url,tags,created_at,updated_at'];
+        let content = '';
+        let contentType = 'text/csv';
+        let filename = `tabinator-export-${new Date().toISOString().split('T')[0]}.csv`;
 
-        // CSV rows
-        for (const link of links) {
-            // Escape CSV fields (handle commas, quotes, newlines)
-            const escapeCsv = (field) => {
-                if (!field) return '';
-                const str = String(field);
-                // If contains comma, quote, or newline, wrap in quotes and escape quotes
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                    return `"${str.replace(/"/g, '""')}"`;
-                }
-                return str;
+        if (format === 'csv') {
+            // CSV format
+            const csvRows = ['name,url,tags,created_at,updated_at'];
+
+            for (const link of links) {
+                // Escape CSV fields (handle commas, quotes, newlines)
+                const escapeCsv = (field) => {
+                    if (!field) return '';
+                    const str = String(field);
+                    // If contains comma, quote, or newline, wrap in quotes and escape quotes
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`;
+                    }
+                    return str;
+                };
+
+                const name = escapeCsv(link.name);
+                const url = escapeCsv(link.url);
+                const tags = escapeCsv(link.tags || '');
+                const created_at = escapeCsv(link.created_at || '');
+                const updated_at = escapeCsv(link.updated_at || '');
+
+                csvRows.push(`${name},${url},${tags},${created_at},${updated_at}`);
+            }
+
+            content = csvRows.join('\n');
+        } else if (format === 'firefox') {
+            // Firefox JSON format
+            console.log('Generating Firefox JSON format');
+            contentType = 'application/json';
+            filename = `tabinator-export-${new Date().toISOString().split('T')[0]}.json`;
+            
+            const firefoxBookmarks = {
+                title: 'Tabinator Bookmarks',
+                id: 1,
+                dateAdded: Date.now(),
+                lastModified: Date.now(),
+                type: 'text/x-moz-place-container',
+                root: 'placesRoot',
+                children: links.map((link, index) => {
+                    const addDate = link.created_at ? new Date(link.created_at).getTime() : Date.now();
+                    return {
+                        title: link.name || 'Untitled',
+                        id: index + 2,
+                        dateAdded: addDate,
+                        lastModified: addDate,
+                        type: 'text/x-moz-place',
+                        uri: link.url,
+                        tags: link.tags || ''
+                    };
+                })
             };
 
-            const name = escapeCsv(link.name);
-            const url = escapeCsv(link.url);
-            const tags = escapeCsv(link.tags || '');
-            const created_at = escapeCsv(link.created_at || '');
-            const updated_at = escapeCsv(link.updated_at || '');
+            content = JSON.stringify(firefoxBookmarks, null, 2);
+        } else if (['chrome', 'edge', 'safari', 'opera', 'netscape'].includes(format)) {
+            // HTML bookmark format (Netscape format)
+            console.log('Generating HTML bookmark format for:', format);
+            contentType = 'text/html';
+            filename = `tabinator-export-${new Date().toISOString().split('T')[0]}.html`;
+            
+            const htmlParts = [
+                '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+                '<!-- This is an automatically generated file.',
+                '     It will be read and overwritten.',
+                '     DO NOT EDIT! -->',
+                '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+                '<TITLE>Bookmarks</TITLE>',
+                '<H1>Bookmarks</H1>',
+                '<DL><p>'
+            ];
 
-            csvRows.push(`${name},${url},${tags},${created_at},${updated_at}`);
+            for (const link of links) {
+                const addDate = link.created_at ? Math.floor(new Date(link.created_at).getTime() / 1000) : Math.floor(Date.now() / 1000);
+                const tags = link.tags ? link.tags.split(',').map(t => t.trim()).filter(t => t).join(',') : '';
+                
+                // Escape HTML entities
+                const escapeHtml = (text) => {
+                    if (!text) return '';
+                    return String(text)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                };
+
+                const name = escapeHtml(link.name || 'Untitled');
+                const url = escapeHtml(link.url);
+                const tagsAttr = tags ? ` TAGS="${escapeHtml(tags)}"` : '';
+
+                htmlParts.push(`    <DT><A HREF="${url}" ADD_DATE="${addDate}"${tagsAttr}>${name}</A>`);
+            }
+
+            htmlParts.push('</DL><p>');
+            content = htmlParts.join('\n');
+        } else {
+            console.error('Unsupported export format:', format);
+            return res.status(400).json({ error: 'Unsupported export format' });
         }
 
-        const csv = csvRows.join('\n');
+        console.log('Export completed - format:', format, 'contentType:', contentType, 'links count:', links.length);
 
-        // Set headers for CSV download
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="tabinator-export-${new Date().toISOString().split('T')[0]}.csv"`);
-        res.send(csv);
+        // Set headers for download
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(content);
     } catch (error) {
         console.error('Error exporting links:', error);
         res.status(500).json({ error: 'Failed to export links' });
@@ -430,28 +512,11 @@ router.post('/import', requireAuth, async (req, res) => {
     const db = await getDatabase();
     try {
         const userId = req.userId;
-        const { csvData } = req.body;
+        const { csvData, links, format } = req.body;
 
-        if (!csvData || typeof csvData !== 'string') {
-            return res.status(400).json({ error: 'CSV data is required' });
-        }
-
-        // Parse CSV
-        const lines = csvData.split('\n').filter(line => line.trim());
-        if (lines.length < 2) {
-            return res.status(400).json({ error: 'CSV must have at least a header and one data row' });
-        }
-
-        // Parse header
-        const header = lines[0].split(',').map(h => h.trim());
-        const nameIndex = header.indexOf('name');
-        const urlIndex = header.indexOf('url');
-        const tagsIndex = header.indexOf('tags');
-        const createdIndex = header.indexOf('created_at');
-        const updatedIndex = header.indexOf('updated_at');
-
-        if (nameIndex === -1 || urlIndex === -1) {
-            return res.status(400).json({ error: 'CSV must have "name" and "url" columns' });
+        // Support both CSV and pre-parsed links array
+        if (!csvData && (!links || !Array.isArray(links))) {
+            return res.status(400).json({ error: 'CSV data or links array is required' });
         }
 
         // Simple CSV parser (handles quoted fields)
@@ -483,30 +548,153 @@ router.post('/import', requireAuth, async (req, res) => {
             fields.push(currentField); // Add last field
             return fields;
         };
+        
+        // Parse CSV if provided
+        let lines = [];
+        let nameIndex = -1;
+        let urlIndex = -1;
+        let tagsIndex = -1;
+        
+        if (csvData) {
+            lines = csvData.split('\n').filter(line => line.trim());
+            if (lines.length < 2) {
+                return res.status(400).json({ error: 'CSV must have at least a header and one data row' });
+            }
+
+            // Parse header using CSV parser to handle quoted fields
+            const header = parseCsvLine(lines[0]).map(h => h.trim());
+            nameIndex = header.indexOf('name');
+            urlIndex = header.indexOf('url');
+            tagsIndex = header.indexOf('tags');
+
+            if (nameIndex === -1 || urlIndex === -1) {
+                return res.status(400).json({ error: 'CSV must have "name" and "url" columns' });
+            }
+        }
 
         let imported = 0;
         let updated = 0;
         let skipped = 0;
         const errors = [];
+        
+        // Process links array (from browser bookmark formats)
+        if (links && Array.isArray(links)) {
+            for (let i = 0; i < links.length; i++) {
+                try {
+                    const link = links[i];
+                    const name = (link.name || '').trim() || 'Untitled';
+                    const url = (link.url || '').trim();
+                    const tags = Array.isArray(link.tags) ? link.tags : 
+                                (typeof link.tags === 'string' ? link.tags.split(',').map(t => t.trim()).filter(t => t) : []);
 
-        // Process each row (skip header)
-        for (let i = 1; i < lines.length; i++) {
-            try {
-                const fields = parseCsvLine(lines[i]);
-                if (fields.length < 2) {
+                    if (!url) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    // Validate URL
+                    try {
+                        const urlObj = new URL(url);
+                        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+                            skipped++;
+                            continue;
+                        }
+                    } catch (e) {
+                        skipped++;
+                        continue;
+                    }
+
+                    // Check if link exists
+                    const existing = await dbGet(
+                        db,
+                        'SELECT id FROM links WHERE user_id = ? AND url = ?',
+                        [userId, url]
+                    );
+
+                    let linkId;
+                    if (existing) {
+                        // Update existing link
+                        await dbRun(
+                            db,
+                            'UPDATE links SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                            [name, existing.id]
+                        );
+                        linkId = existing.id;
+
+                        // Remove existing tags
+                        await dbRun(
+                            db,
+                            'DELETE FROM link_tags WHERE link_id = ?',
+                            [linkId]
+                        );
+
+                        updated++;
+                    } else {
+                        // Create new link
+                        const linkResult = await dbRun(
+                            db,
+                            'INSERT INTO links (user_id, name, url) VALUES (?, ?, ?)',
+                            [userId, name, url]
+                        );
+                        linkId = linkResult.lastID;
+                        imported++;
+                    }
+
+                    // Add tags
+                    if (tags.length > 0) {
+                        for (const tagName of tags) {
+                            const sanitizedTag = tagName.trim().substring(0, 100);
+                            if (!sanitizedTag) continue;
+
+                            // Get or create tag
+                            let tag = await dbGet(
+                                db,
+                                'SELECT id FROM tags WHERE user_id = ? AND name = ?',
+                                [userId, sanitizedTag]
+                            );
+
+                            if (!tag) {
+                                const tagResult = await dbRun(
+                                    db,
+                                    'INSERT INTO tags (user_id, name) VALUES (?, ?)',
+                                    [userId, sanitizedTag]
+                                );
+                                tag = { id: tagResult.lastID };
+                            }
+
+                            // Link tag to link
+                            await dbRun(
+                                db,
+                                'INSERT OR IGNORE INTO link_tags (link_id, tag_id) VALUES (?, ?)',
+                                [linkId, tag.id]
+                            );
+                        }
+                    }
+                } catch (error) {
+                    errors.push(`Link ${i + 1}: ${error.message}`);
                     skipped++;
-                    continue;
                 }
+            }
+        } else if (csvData) {
+            // Process CSV format (existing logic)
+            // Process each row (skip header)
+            for (let i = 1; i < lines.length; i++) {
+                try {
+                    const fields = parseCsvLine(lines[i]);
+                    if (fields.length < 2) {
+                        skipped++;
+                        continue;
+                    }
 
-                const name = fields[nameIndex]?.trim() || 'Untitled';
-                const url = fields[urlIndex]?.trim() || '';
-                const tagsStr = fields[tagsIndex]?.trim() || '';
-                const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+                    const name = fields[nameIndex]?.trim() || 'Untitled';
+                    const url = fields[urlIndex]?.trim() || '';
+                    const tagsStr = fields[tagsIndex]?.trim() || '';
+                    const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
 
-                if (!url) {
-                    skipped++;
-                    continue;
-                }
+                    if (!url) {
+                        skipped++;
+                        continue;
+                    }
 
                 // Check if link exists
                 const existing = await dbGet(
@@ -574,9 +762,10 @@ router.post('/import', requireAuth, async (req, res) => {
                         );
                     }
                 }
-            } catch (error) {
-                errors.push(`Row ${i + 1}: ${error.message}`);
-                skipped++;
+                } catch (error) {
+                    errors.push(`Row ${i + 1}: ${error.message}`);
+                    skipped++;
+                }
             }
         }
 

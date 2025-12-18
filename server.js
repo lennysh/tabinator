@@ -25,7 +25,8 @@ app.use(cors({
 }));
 
 // Parse JSON request bodies (needed before logging to see body)
-app.use(express.json());
+// Increase limit to 50MB to handle large bookmark imports
+app.use(express.json({ limit: '50mb' }));
 
 // Session configuration (needed before logging to see userId)
 // Use SQLite store to persist sessions across server restarts
