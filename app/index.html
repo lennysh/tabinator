@@ -326,38 +326,40 @@
                         <div>
                             <label for="export-format-select" class="block text-sm font-medium text-gray-300 mb-2">Export Format</label>
                             <select id="export-format-select" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-3">
-                                <option value="csv">Tabinator CSV</option>
-                                <option value="chrome">Chrome Bookmarks (HTML)</option>
-                                <option value="firefox">Firefox Bookmarks (JSON)</option>
-                                <option value="edge">Edge Bookmarks (HTML)</option>
-                                <option value="safari">Safari Bookmarks (HTML)</option>
-                                <option value="opera">Opera Bookmarks (HTML)</option>
-                                <option value="netscape">Netscape/Generic HTML</option>
+                                <option value="tabinator">Tabinator (JSON) - Full backup (links, groups, settings)</option>
+                                <option value="csv">Generic CSV - Links with tags</option>
+                                <option value="chrome">Chrome Bookmarks (HTML) - Links only</option>
+                                <option value="firefox">Firefox Bookmarks (JSON) - Links only</option>
+                                <option value="edge">Edge Bookmarks (HTML) - Links only</option>
+                                <option value="safari">Safari Bookmarks (HTML) - Links only</option>
+                                <option value="opera">Opera Bookmarks (HTML) - Links only</option>
+                                <option value="netscape">Netscape/Generic HTML - Links only</option>
                             </select>
                             <button type="button" id="export-links-btn" class="btn btn-green text-sm w-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                Export Links
+                                Export
                             </button>
-                            <p class="mt-1 text-xs text-gray-400">Download all your links in the selected format</p>
+                            <p class="mt-1 text-xs text-gray-400">Download your data in the selected format</p>
                         </div>
                         <div>
                             <label for="import-format-select" class="block text-sm font-medium text-gray-300 mb-2">Import Format</label>
                             <select id="import-format-select" class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-3">
-                                <option value="csv">Tabinator CSV</option>
-                                <option value="chrome">Chrome Bookmarks (HTML)</option>
-                                <option value="firefox">Firefox Bookmarks (JSON)</option>
-                                <option value="edge">Edge Bookmarks (HTML)</option>
-                                <option value="safari">Safari Bookmarks (HTML)</option>
-                                <option value="opera">Opera Bookmarks (HTML)</option>
-                                <option value="netscape">Netscape/Generic HTML</option>
+                                <option value="tabinator">Tabinator (JSON) - Full restore (links, groups, settings)</option>
+                                <option value="csv">Generic CSV - Links with tags</option>
+                                <option value="chrome">Chrome Bookmarks (HTML) - Links only</option>
+                                <option value="firefox">Firefox Bookmarks (JSON) - Links only</option>
+                                <option value="edge">Edge Bookmarks (HTML) - Links only</option>
+                                <option value="safari">Safari Bookmarks (HTML) - Links only</option>
+                                <option value="opera">Opera Bookmarks (HTML) - Links only</option>
+                                <option value="netscape">Netscape/Generic HTML - Links only</option>
                             </select>
                             <label for="import-file-input" class="block text-sm font-medium text-gray-300 mb-2">Import File</label>
                             <input type="file" id="import-file-input" accept=".csv,.html,.json" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
                             <button type="button" id="import-links-btn" class="btn btn-blue text-sm w-full mt-2" disabled>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                                Import Links
+                                Import
                             </button>
-                            <p class="mt-1 text-xs text-gray-400">Merge file with existing links (updates existing, adds new)</p>
+                            <p class="mt-1 text-xs text-gray-400">Merge file with existing data (updates existing, adds new)</p>
                             <div id="import-status" class="hidden mt-2 text-sm"></div>
                         </div>
                     </div>
@@ -1158,7 +1160,7 @@
         async function handleExportLinks() {
             try {
                 const formatSelect = document.getElementById('export-format-select');
-                const format = formatSelect ? formatSelect.value : 'csv';
+                const format = formatSelect ? formatSelect.value : 'tabinator';
                 
                 console.log('Exporting with format:', format);
                 
@@ -1186,7 +1188,7 @@
                 let filename = `tabinator-export-${date}`;
                 let extension = 'csv';
                 
-                if (format === 'firefox') {
+                if (format === 'tabinator' || format === 'firefox') {
                     extension = 'json';
                 } else if (['chrome', 'edge', 'safari', 'opera', 'netscape'].includes(format)) {
                     extension = 'html';
@@ -1306,6 +1308,9 @@
                     // Parse based on format
                     if (format === 'csv') {
                         csvData = fileContent;
+                    } else if (format === 'tabinator') {
+                        // Tabinator JSON format - will be sent as-is to backend
+                        // No need to parse here, backend will handle it
                     } else if (['chrome', 'edge', 'safari', 'opera', 'netscape'].includes(format)) {
                         links = parseHtmlBookmarks(fileContent);
                         if (links.length === 0) {
@@ -1321,17 +1326,35 @@
                     }
                     
                     importBtn.textContent = 'Importing...';
-                    statusEl.textContent = `Importing ${links.length || 'links'}...`;
+                    let itemCount = `${links.length || 'links'}`;
+                    if (format === 'tabinator') {
+                        const tabinatorData = JSON.parse(fileContent);
+                        const linkCount = tabinatorData.links?.length || 0;
+                        const groupCount = tabinatorData.groups?.length || 0;
+                        itemCount = `${linkCount} links, ${groupCount} groups`;
+                    }
+                    statusEl.textContent = `Importing ${itemCount}...`;
+                    
+                    // For Tabinator format, send the full JSON structure
+                    let requestBody;
+                    if (format === 'tabinator') {
+                        requestBody = { 
+                            tabinatorData: JSON.parse(fileContent), 
+                            format 
+                        };
+                    } else {
+                        requestBody = { 
+                            csvData,
+                            links: links.length > 0 ? links : undefined,
+                            format 
+                        };
+                    }
                     
                     const response = await fetch('/api/import', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
-                        body: JSON.stringify({ 
-                            csvData,
-                            links: links.length > 0 ? links : undefined,
-                            format 
-                        })
+                        body: JSON.stringify(requestBody)
                     });
                     
                     const data = await response.json();

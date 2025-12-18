@@ -368,7 +368,7 @@ router.get('/export', requireAuth, async (req, res) => {
     const db = await getDatabase();
     try {
         const userId = req.userId;
-        const format = req.query.format || 'csv';
+        const format = req.query.format || 'tabinator';
         
         console.log('Export request - format:', format, 'userId:', userId);
 
@@ -386,29 +386,120 @@ router.get('/export', requireAuth, async (req, res) => {
             [userId]
         );
 
+        // Format links with tags as arrays
+        const formattedLinks = links.map(link => ({
+            name: link.name,
+            url: link.url,
+            tags: link.tags ? link.tags.split(',') : [],
+            created_at: link.created_at,
+            updated_at: link.updated_at
+        }));
+
         let content = '';
         let contentType = 'text/csv';
         let filename = `tabinator-export-${new Date().toISOString().split('T')[0]}.csv`;
 
-        if (format === 'csv') {
+        if (format === 'tabinator') {
+            // Tabinator JSON format - includes links, groups, and config
+            console.log('Generating Tabinator JSON format');
+            contentType = 'application/json';
+            filename = `tabinator-export-${new Date().toISOString().split('T')[0]}.json`;
+            
+            // Get user config
+            const config = await dbGet(
+                db,
+                'SELECT max_tabs_open FROM user_config WHERE user_id = ?',
+                [userId]
+            );
+
+            // Get all groups with their rules
+            const groups = await dbAll(
+                db,
+                'SELECT id, name FROM groups WHERE user_id = ? ORDER BY name',
+                [userId]
+            );
+
+            const formattedGroups = [];
+            for (const group of groups) {
+                const rules = await dbAll(
+                    db,
+                    'SELECT rule_type, match_type, match_value, block_index FROM group_rules WHERE group_id = ? ORDER BY rule_type, block_index, match_type',
+                    [group.id]
+                );
+
+                const includeBlocks = {};
+                const excludeBlocks = {};
+                
+                for (const rule of rules) {
+                    const blockKey = `${rule.rule_type}_${rule.block_index}`;
+                    const blocks = rule.rule_type === 'include' ? includeBlocks : excludeBlocks;
+                    
+                    if (!blocks[blockKey]) {
+                        blocks[blockKey] = {};
+                    }
+                    
+                    if (!blocks[blockKey][rule.match_type]) {
+                        blocks[blockKey][rule.match_type] = [];
+                    }
+                    blocks[blockKey][rule.match_type].push(rule.match_value);
+                }
+                
+                const include = [];
+                const exclude = [];
+                
+                const includeKeys = Object.keys(includeBlocks).sort((a, b) => {
+                    const aIndex = parseInt(a.split('_')[1]);
+                    const bIndex = parseInt(b.split('_')[1]);
+                    return aIndex - bIndex;
+                });
+                for (const key of includeKeys) {
+                    include.push(includeBlocks[key]);
+                }
+                
+                const excludeKeys = Object.keys(excludeBlocks).sort((a, b) => {
+                    const aIndex = parseInt(a.split('_')[1]);
+                    const bIndex = parseInt(b.split('_')[1]);
+                    return aIndex - bIndex;
+                });
+                for (const key of excludeKeys) {
+                    exclude.push(excludeBlocks[key]);
+                }
+
+                formattedGroups.push({
+                    name: group.name,
+                    include: include.length > 0 ? include : [],
+                    exclude: exclude.length > 0 ? exclude : []
+                });
+            }
+
+            const tabinatorData = {
+                version: '1.0',
+                exported_at: new Date().toISOString(),
+                config: config ? { max_tabs_open: config.max_tabs_open } : { max_tabs_open: 20 },
+                groups: formattedGroups,
+                links: formattedLinks
+            };
+
+            content = JSON.stringify(tabinatorData, null, 2);
+        } else if (format === 'csv') {
             // CSV format
             const csvRows = ['name,url,tags,created_at,updated_at'];
 
-            for (const link of links) {
-                // Escape CSV fields (handle commas, quotes, newlines)
-                const escapeCsv = (field) => {
-                    if (!field) return '';
-                    const str = String(field);
-                    // If contains comma, quote, or newline, wrap in quotes and escape quotes
-                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                        return `"${str.replace(/"/g, '""')}"`;
-                    }
-                    return str;
-                };
+            // Escape CSV fields (handle commas, quotes, newlines)
+            const escapeCsv = (field) => {
+                if (!field) return '';
+                const str = String(field);
+                // If contains comma, quote, or newline, wrap in quotes and escape quotes
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
 
+            for (const link of formattedLinks) {
                 const name = escapeCsv(link.name);
                 const url = escapeCsv(link.url);
-                const tags = escapeCsv(link.tags || '');
+                const tags = escapeCsv(Array.isArray(link.tags) ? link.tags.join(',') : (link.tags || ''));
                 const created_at = escapeCsv(link.created_at || '');
                 const updated_at = escapeCsv(link.updated_at || '');
 
@@ -429,18 +520,18 @@ router.get('/export', requireAuth, async (req, res) => {
                 lastModified: Date.now(),
                 type: 'text/x-moz-place-container',
                 root: 'placesRoot',
-                children: links.map((link, index) => {
-                    const addDate = link.created_at ? new Date(link.created_at).getTime() : Date.now();
-                    return {
-                        title: link.name || 'Untitled',
-                        id: index + 2,
-                        dateAdded: addDate,
-                        lastModified: addDate,
-                        type: 'text/x-moz-place',
-                        uri: link.url,
-                        tags: link.tags || ''
-                    };
-                })
+            children: formattedLinks.map((link, index) => {
+                const addDate = link.created_at ? new Date(link.created_at).getTime() : Date.now();
+                return {
+                    title: link.name || 'Untitled',
+                    id: index + 2,
+                    dateAdded: addDate,
+                    lastModified: addDate,
+                    type: 'text/x-moz-place',
+                    uri: link.url,
+                    tags: Array.isArray(link.tags) ? link.tags.join(',') : (link.tags || '')
+                };
+            })
             };
 
             content = JSON.stringify(firefoxBookmarks, null, 2);
@@ -461,9 +552,9 @@ router.get('/export', requireAuth, async (req, res) => {
                 '<DL><p>'
             ];
 
-            for (const link of links) {
+            for (const link of formattedLinks) {
                 const addDate = link.created_at ? Math.floor(new Date(link.created_at).getTime() / 1000) : Math.floor(Date.now() / 1000);
-                const tags = link.tags ? link.tags.split(',').map(t => t.trim()).filter(t => t).join(',') : '';
+                const tags = Array.isArray(link.tags) ? link.tags.join(',') : (link.tags || '');
                 
                 // Escape HTML entities
                 const escapeHtml = (text) => {
@@ -512,7 +603,215 @@ router.post('/import', requireAuth, async (req, res) => {
     const db = await getDatabase();
     try {
         const userId = req.userId;
-        const { csvData, links, format } = req.body;
+        const { csvData, links, format, tabinatorData } = req.body;
+
+        // Handle Tabinator JSON format (full backup/restore)
+        if (format === 'tabinator' && tabinatorData) {
+            console.log('Importing Tabinator JSON format');
+            
+            let imported = 0;
+            let updated = 0;
+            let skipped = 0;
+            const errors = [];
+            
+            // Import config
+            if (tabinatorData.config && tabinatorData.config.max_tabs_open) {
+                await dbRun(
+                    db,
+                    `INSERT OR REPLACE INTO user_config (user_id, max_tabs_open) VALUES (?, ?)`,
+                    [userId, tabinatorData.config.max_tabs_open]
+                );
+            }
+            
+            // Import groups
+            if (tabinatorData.groups && Array.isArray(tabinatorData.groups)) {
+                for (const group of tabinatorData.groups) {
+                    try {
+                        // Check if group exists
+                        const existingGroup = await dbGet(
+                            db,
+                            'SELECT id FROM groups WHERE user_id = ? AND name = ?',
+                            [userId, group.name]
+                        );
+                        
+                        let groupId;
+                        if (existingGroup) {
+                            // Update existing group
+                            await dbRun(
+                                db,
+                                'UPDATE groups SET name = ? WHERE id = ?',
+                                [group.name, existingGroup.id]
+                            );
+                            groupId = existingGroup.id;
+                            
+                            // Delete existing rules
+                            await dbRun(
+                                db,
+                                'DELETE FROM group_rules WHERE group_id = ?',
+                                [groupId]
+                            );
+                        } else {
+                            // Create new group
+                            const groupResult = await dbRun(
+                                db,
+                                'INSERT INTO groups (user_id, name) VALUES (?, ?)',
+                                [userId, group.name]
+                            );
+                            groupId = groupResult.lastID;
+                        }
+                        
+                        // Add include rules
+                        if (group.include && Array.isArray(group.include)) {
+                            for (let blockIndex = 0; blockIndex < group.include.length; blockIndex++) {
+                                const block = group.include[blockIndex];
+                                for (const matchType of ['tags', 'names', 'urls']) {
+                                    if (block[matchType] && Array.isArray(block[matchType])) {
+                                        for (const matchValue of block[matchType]) {
+                                            await dbRun(
+                                                db,
+                                                'INSERT INTO group_rules (group_id, rule_type, match_type, match_value, block_index) VALUES (?, ?, ?, ?, ?)',
+                                                [groupId, 'include', matchType, matchValue, blockIndex]
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Add exclude rules
+                        if (group.exclude && Array.isArray(group.exclude)) {
+                            for (let blockIndex = 0; blockIndex < group.exclude.length; blockIndex++) {
+                                const block = group.exclude[blockIndex];
+                                for (const matchType of ['tags', 'names', 'urls']) {
+                                    if (block[matchType] && Array.isArray(block[matchType])) {
+                                        for (const matchValue of block[matchType]) {
+                                            await dbRun(
+                                                db,
+                                                'INSERT INTO group_rules (group_id, rule_type, match_type, match_value, block_index) VALUES (?, ?, ?, ?, ?)',
+                                                [groupId, 'exclude', matchType, matchValue, blockIndex]
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        errors.push(`Group "${group.name}": ${error.message}`);
+                        skipped++;
+                    }
+                }
+            }
+            
+            // Import links (same logic as regular import)
+            if (tabinatorData.links && Array.isArray(tabinatorData.links)) {
+                for (let i = 0; i < tabinatorData.links.length; i++) {
+                    try {
+                        const link = tabinatorData.links[i];
+                        const name = (link.name || '').trim() || 'Untitled';
+                        const url = (link.url || '').trim();
+                        const tags = Array.isArray(link.tags) ? link.tags : 
+                                    (typeof link.tags === 'string' ? link.tags.split(',').map(t => t.trim()).filter(t => t) : []);
+
+                        if (!url) {
+                            skipped++;
+                            continue;
+                        }
+                        
+                        // Validate URL
+                        try {
+                            const urlObj = new URL(url);
+                            if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+                                skipped++;
+                                continue;
+                            }
+                        } catch (e) {
+                            skipped++;
+                            continue;
+                        }
+
+                        // Check if link exists
+                        const existing = await dbGet(
+                            db,
+                            'SELECT id FROM links WHERE user_id = ? AND url = ?',
+                            [userId, url]
+                        );
+
+                        let linkId;
+                        if (existing) {
+                            // Update existing link
+                            await dbRun(
+                                db,
+                                'UPDATE links SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                                [name, existing.id]
+                            );
+                            linkId = existing.id;
+
+                            // Remove existing tags
+                            await dbRun(
+                                db,
+                                'DELETE FROM link_tags WHERE link_id = ?',
+                                [linkId]
+                            );
+
+                            updated++;
+                        } else {
+                            // Create new link
+                            const linkResult = await dbRun(
+                                db,
+                                'INSERT INTO links (user_id, name, url) VALUES (?, ?, ?)',
+                                [userId, name, url]
+                            );
+                            linkId = linkResult.lastID;
+                            imported++;
+                        }
+
+                        // Add tags
+                        if (tags.length > 0) {
+                            for (const tagName of tags) {
+                                const sanitizedTag = tagName.trim().substring(0, 100);
+                                if (!sanitizedTag) continue;
+
+                                // Get or create tag
+                                let tag = await dbGet(
+                                    db,
+                                    'SELECT id FROM tags WHERE user_id = ? AND name = ?',
+                                    [userId, sanitizedTag]
+                                );
+
+                                if (!tag) {
+                                    const tagResult = await dbRun(
+                                        db,
+                                        'INSERT INTO tags (user_id, name) VALUES (?, ?)',
+                                        [userId, sanitizedTag]
+                                    );
+                                    tag = { id: tagResult.lastID };
+                                }
+
+                                // Link tag to link
+                                await dbRun(
+                                    db,
+                                    'INSERT OR IGNORE INTO link_tags (link_id, tag_id) VALUES (?, ?)',
+                                    [linkId, tag.id]
+                                );
+                            }
+                        }
+                    } catch (error) {
+                        errors.push(`Link ${i + 1}: ${error.message}`);
+                        skipped++;
+                    }
+                }
+            }
+            
+            res.json({
+                message: 'Tabinator import completed',
+                imported,
+                updated,
+                skipped,
+                errors: errors.length > 0 ? errors : undefined
+            });
+            
+            return;
+        }
 
         // Support both CSV and pre-parsed links array
         if (!csvData && (!links || !Array.isArray(links))) {
