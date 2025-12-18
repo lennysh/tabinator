@@ -274,7 +274,7 @@ This section tracks testing status for various bookmark import/export formats.
 - [ ] **Edge Bookmarks (HTML)**
 - [ ] **Safari Bookmarks (HTML)**
 - [ ] **Opera Bookmarks (HTML)**
-- [ ] **Netscape/Generic HTML**
+- [x] **Netscape/Generic HTML** - ✅ Tested and working
 
 ### Export Formats
 
