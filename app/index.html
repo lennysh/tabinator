@@ -524,6 +524,11 @@
                     
                     <div id="tag-filter-container" class="hidden bg-gray-800 rounded-lg p-4">
                         <label class="block text-sm font-medium text-gray-400 mb-3">Filter by Tags:</label>
+                        <div class="mb-3">
+                            <button id="no-tags-filter-btn" class="tag-btn tag-btn-inactive" data-filter="no-tags">
+                                No Tags
+                            </button>
+                        </div>
                         <div id="tag-pills-container" class="flex flex-wrap gap-2 max-h-[35vh] overflow-y-auto">
                             <!-- Tag buttons will be dynamically inserted here -->
                         </div>
@@ -545,6 +550,7 @@
         // Store filter states globally
         let allTags = new Set();
         let activeTags = new Set();
+        let filterNoTags = false; // Filter for links with zero tags
         let allGroups = new Set(); // Will hold group *names*
         let activeGroups = new Set();
         
@@ -1372,6 +1378,10 @@
             // App listeners (only work when authenticated)
             document.getElementById('open-all-filtered-btn').addEventListener('click', handleOpenAllFiltered);
             document.getElementById('tag-pills-container').addEventListener('click', handleTagClick);
+            const noTagsFilterBtn = document.getElementById('no-tags-filter-btn');
+            if (noTagsFilterBtn) {
+                noTagsFilterBtn.addEventListener('click', handleNoTagsFilterClick);
+            }
             document.getElementById('group-pills-container').addEventListener('click', handleGroupClick);
 
             // Modal listeners
@@ -1488,6 +1498,7 @@
                 localStorage.setItem('tabinatorSort', 'az');
             }
             activeTags = new Set(JSON.parse(localStorage.getItem('tabinatorTags') || '[]'));
+            filterNoTags = localStorage.getItem('tabinatorFilterNoTags') === 'true';
             activeGroups = new Set(JSON.parse(localStorage.getItem('tabinatorGroups') || '[]'));
 
             // Apply restored values to inputs
@@ -1597,13 +1608,22 @@
             const tagFilterContainer = document.getElementById('tag-filter-container');
             tagContainer.innerHTML = '';
             tagButtonElements = {};
-            
-            if (allTags.size === 0) {
+
+            // Safety check - ensure linkData exists
+            if (!linkData || !linkData.links || linkData.links.length === 0) {
                 tagFilterContainer.classList.add('hidden');
                 return;
             }
-            
+
+            // Always show tag filter container if there are any links
+            // This ensures the "No Tags" button is always available
             tagFilterContainer.classList.remove('hidden');
+            
+            // Always show the no-tags button when there are links
+            const noTagsBtn = document.getElementById('no-tags-filter-btn');
+            if (noTagsBtn) {
+                noTagsBtn.style.display = 'inline-block';
+            }
             const sortedTags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
             
             sortedTags.forEach(tag => {
@@ -1658,6 +1678,41 @@
                 } else {
                     button.className = 'tag-btn tag-btn-hidden';
                 }
+            }
+        }
+        
+        /**
+         * Updates the state of the "No Tags" filter button
+         */
+        function updateNoTagsFilterButton() {
+            const noTagsBtn = document.getElementById('no-tags-filter-btn');
+            if (!noTagsBtn) return;
+            
+            // Safety check - ensure linkData exists
+            if (!linkData || !linkData.links) {
+                noTagsBtn.style.display = 'none';
+                return;
+            }
+            
+            // Check if there are any links with zero tags in the current filtered set
+            // (before tag filtering is applied)
+            const hasLinksWithNoTags = linkData.links.some(link => {
+                return !link.tags || !Array.isArray(link.tags) || link.tags.length === 0;
+            });
+            
+            if (filterNoTags) {
+                noTagsBtn.className = 'tag-btn tag-btn-active-tag';
+            } else {
+                noTagsBtn.className = 'tag-btn tag-btn-inactive';
+            }
+            
+            // Show button if the tag filter container is visible
+            const tagFilterContainer = document.getElementById('tag-filter-container');
+            if (tagFilterContainer && tagFilterContainer.classList.contains('hidden')) {
+                noTagsBtn.style.display = 'none';
+            } else {
+                // Always show the button when the container is visible
+                noTagsBtn.style.display = 'inline-block';
             }
         }
 
@@ -1752,9 +1807,15 @@
                 });
             }
             
-            // 2. Filter by Active Tags (AND logic)
+            // 2. Filter by Active Tags (AND logic) or No Tags filter
             let tagsFilteredLinks = [...searchFilteredLinks];
-            if (activeTags.size > 0) {
+            if (filterNoTags) {
+                // Show only links with zero tags
+                tagsFilteredLinks = tagsFilteredLinks.filter(link => {
+                    return !link.tags || !Array.isArray(link.tags) || link.tags.length === 0;
+                });
+            } else if (activeTags.size > 0) {
+                // Show only links that have all active tags
                 tagsFilteredLinks = tagsFilteredLinks.filter(link => {
                     if (!link.tags || !Array.isArray(link.tags)) return false;
                     return Array.from(activeTags).every(activeTag => link.tags.includes(activeTag));
@@ -1859,6 +1920,7 @@
 
             // 6. Update the tag and group pill UI
             updateTagPills(availableTags);
+            updateNoTagsFilterButton();
             updateGroupPills(availableGroups);
 
             // 7. Sort the filtered links
@@ -2034,6 +2096,14 @@
             if (!target) return;
             
             const tag = target.getAttribute('data-tag');
+            if (!tag) return; // Skip if it's the "No Tags" button
+            
+            // Clear "No Tags" filter when selecting regular tags
+            if (filterNoTags) {
+                filterNoTags = false;
+                localStorage.removeItem('tabinatorFilterNoTags');
+            }
+            
             if (activeTags.has(tag)) {
                 activeTags.delete(tag);
             } else {
@@ -2041,6 +2111,24 @@
             }
             
             localStorage.setItem('tabinatorTags', JSON.stringify(Array.from(activeTags)));
+            renderApp();
+        }
+        
+        function handleNoTagsFilterClick(event) {
+            // Clear regular tags when selecting "No Tags" filter
+            if (activeTags.size > 0) {
+                activeTags.clear();
+                localStorage.setItem('tabinatorTags', JSON.stringify([]));
+            }
+            
+            // Toggle "No Tags" filter
+            filterNoTags = !filterNoTags;
+            if (filterNoTags) {
+                localStorage.setItem('tabinatorFilterNoTags', 'true');
+            } else {
+                localStorage.removeItem('tabinatorFilterNoTags');
+            }
+            
             renderApp();
         }
 
