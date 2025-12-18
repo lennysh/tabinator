@@ -268,8 +268,8 @@ This section tracks testing status for various bookmark import/export formats.
 
 ### Import Formats
 
+- [x] **Tabinator CSV** - ✅ Tested and working
 - [x] **Chrome Bookmarks (HTML)** - ✅ Tested and working
-- [ ] **Tabinator CSV**
 - [ ] **Firefox Bookmarks (JSON)**
 - [ ] **Edge Bookmarks (HTML)**
 - [ ] **Safari Bookmarks (HTML)**
@@ -278,7 +278,7 @@ This section tracks testing status for various bookmark import/export formats.
 
 ### Export Formats
 
-- [ ] **Tabinator CSV**
+- [x] **Tabinator CSV** - ✅ Tested and working
 - [ ] **Chrome Bookmarks (HTML)**
 - [ ] **Firefox Bookmarks (JSON)**
 - [ ] **Edge Bookmarks (HTML)**
