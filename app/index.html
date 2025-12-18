@@ -584,7 +584,12 @@
                 // Handle 401 Unauthorized
                 if (response.status === 401) {
                     isAuthenticated = false;
-                    showLoginModal();
+                    // Only show login modal if we're not in the middle of a login flow
+                    // (check if login modal is already visible)
+                    const loginModal = document.getElementById('login-modal');
+                    if (!loginModal || !loginModal.classList.contains('modal-visible')) {
+                        showLoginModal();
+                    }
                     throw new Error('Authentication required');
                 }
                 
@@ -661,21 +666,67 @@
                     body: JSON.stringify({ username, password })
                 });
 
-                const data = await response.json();
-
                 if (!response.ok) {
-                    errorEl.textContent = data.error || 'Login failed';
+                    const errorData = await response.json().catch(() => ({ error: 'Login failed' }));
+                    errorEl.textContent = errorData.error || 'Login failed';
                     errorEl.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                const data = await response.json().catch((err) => {
+                    console.error('Failed to parse login response:', err);
+                    errorEl.textContent = 'Invalid response from server';
+                    errorEl.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    return;
+                });
+
+                if (!data) {
+                    errorEl.textContent = 'Invalid response from server';
+                    errorEl.classList.remove('hidden');
+                    submitBtn.disabled = false;
                     return;
                 }
 
                 // Success
+                console.log('Login successful:', data);
                 isAuthenticated = true;
                 currentUser = data.user;
+                
+                // Verify session is actually set before proceeding
+                console.log('Verifying session...');
+                const verifyResponse = await fetch('/api/auth/me', { credentials: 'include' });
+                const verifyData = await verifyResponse.json();
+                
+                if (!verifyData.authenticated) {
+                    console.warn('Session not immediately available, waiting...');
+                    // Wait a bit longer and try again
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const retryResponse = await fetch('/api/auth/me', { credentials: 'include' });
+                    const retryData = await retryResponse.json();
+                    if (!retryData.authenticated) {
+                        console.error('Session verification failed after login');
+                        errorEl.textContent = 'Login successful but session not established. Please refresh the page.';
+                        errorEl.classList.remove('hidden');
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                }
+                
+                console.log('Session verified, proceeding...');
                 hideLoginModal();
                 showApp();
-                await loadAndRenderLinks();
+                
+                try {
+                    await loadAndRenderLinks();
+                } catch (loadError) {
+                    console.error('Error loading links after login:', loadError);
+                    // Don't show login modal - we just successfully logged in
+                    // The error will be displayed by the error state
+                }
             } catch (error) {
+                console.error('Login error:', error);
                 errorEl.textContent = 'Network error. Please try again.';
                 errorEl.classList.remove('hidden');
             } finally {

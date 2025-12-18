@@ -83,6 +83,17 @@ router.post('/login', loginValidation, checkValidation, async (req, res) => {
         // Set session
         req.session.userId = user.id;
         req.session.username = user.username;
+        
+        // Save session explicitly before sending response
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Error saving session:', err);
+                    return reject(err);
+                }
+                resolve();
+            });
+        });
 
         res.json({ 
             message: 'Login successful',

@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    container_name: tabinator
+    ports:
+      - "8080:8080"   # HTTP (for internal use)
+      - "8443:8443"   # HTTPS
+    volumes:
+      - ./app:/usr/src/app/app
+      - ./data:/usr/src/app/data
+      - ./certs:/usr/src/app/certs:ro  # Mount certificates
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
+      - NODE_ENV=production
+      - HTTPS_PORT=8443
+      - SSL_CERT_PATH=/usr/src/app/certs/cert.pem
+      - SSL_KEY_PATH=/usr/src/app/certs/key.pem
+

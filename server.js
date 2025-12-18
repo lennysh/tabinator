@@ -14,6 +14,10 @@ const HTML_FILE_PATH = path.join(__dirname, 'app', 'index.html');
 
 // --- Middleware ---
 
+// Trust proxy (needed when behind reverse proxy like Nginx/Caddy)
+// This allows req.protocol to correctly detect HTTPS
+app.set('trust proxy', 1);
+
 // CORS configuration - allow credentials for session cookies
 app.use(cors({
     origin: process.env.CORS_ORIGIN || true, // Allow all origins in dev, set specific in production
@@ -34,8 +38,12 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        // Secure cookies only if explicitly set via env var, or if behind HTTPS proxy
+        // When behind a reverse proxy, req.secure will be true if X-Forwarded-Proto is https
+        secure: process.env.FORCE_SECURE_COOKIES === 'true' || process.env.NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: 'lax', // Allow cookies to be sent with same-site requests
+        path: '/', // Ensure cookie is available for all paths
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
 }));

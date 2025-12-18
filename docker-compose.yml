@@ -17,4 +17,6 @@ services:
     environment:
       # Set a secure session secret in production!
       - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
-      - NODE_ENV=production
+      # Note: Only set NODE_ENV=production if using HTTPS (via reverse proxy)
+      # For HTTP development, leave unset or set to development
+      # - NODE_ENV=production
