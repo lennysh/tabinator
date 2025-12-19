@@ -16,7 +16,7 @@ router.get('/data', requireAuth, async (req, res) => {
         // Get user config
         const config = await dbGet(
             db,
-            'SELECT max_tabs_open FROM user_config WHERE user_id = ?',
+            'SELECT warning_tabs_open, max_tabs_open FROM user_config WHERE user_id = ?',
             [userId]
         );
 
@@ -107,7 +107,13 @@ router.get('/data', requireAuth, async (req, res) => {
         }
 
         res.json({
-            config: config ? { max_tabs_open: config.max_tabs_open } : { max_tabs_open: 20 },
+            config: config ? { 
+                warning_tabs_open: config.warning_tabs_open ?? 20,
+                max_tabs_open: config.max_tabs_open ?? 50
+            } : { 
+                warning_tabs_open: 20,
+                max_tabs_open: 50
+            },
             groups: formattedGroups,
             links: formattedLinks
         });
@@ -408,7 +414,7 @@ router.get('/export', requireAuth, async (req, res) => {
             // Get user config
             const config = await dbGet(
                 db,
-                'SELECT max_tabs_open FROM user_config WHERE user_id = ?',
+                'SELECT warning_tabs_open, max_tabs_open FROM user_config WHERE user_id = ?',
                 [userId]
             );
 
@@ -475,7 +481,13 @@ router.get('/export', requireAuth, async (req, res) => {
             const tabinatorData = {
                 version: '1.0',
                 exported_at: new Date().toISOString(),
-                config: config ? { max_tabs_open: config.max_tabs_open } : { max_tabs_open: 20 },
+                config: config ? { 
+                    warning_tabs_open: config.warning_tabs_open ?? 20,
+                    max_tabs_open: config.max_tabs_open ?? 50
+                } : { 
+                    warning_tabs_open: 20,
+                    max_tabs_open: 50
+                },
                 groups: formattedGroups,
                 links: formattedLinks
             };
@@ -615,11 +627,13 @@ router.post('/import', requireAuth, async (req, res) => {
             const errors = [];
             
             // Import config
-            if (tabinatorData.config && tabinatorData.config.max_tabs_open) {
+            if (tabinatorData.config) {
+                const warningTabs = tabinatorData.config.warning_tabs_open ?? 20;
+                const maxTabs = tabinatorData.config.max_tabs_open ?? 50;
                 await dbRun(
                     db,
-                    `INSERT OR REPLACE INTO user_config (user_id, max_tabs_open) VALUES (?, ?)`,
-                    [userId, tabinatorData.config.max_tabs_open]
+                    `INSERT OR REPLACE INTO user_config (user_id, warning_tabs_open, max_tabs_open) VALUES (?, ?, ?)`,
+                    [userId, warningTabs, maxTabs]
                 );
             }
             

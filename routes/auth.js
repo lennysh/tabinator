@@ -38,8 +38,8 @@ router.post('/register', registerValidation, checkValidation, async (req, res) =
         // Create default config
         await dbRun(
             db,
-            'INSERT INTO user_config (user_id, max_tabs_open) VALUES (?, ?)',
-            [result.lastID, 20]
+            'INSERT INTO user_config (user_id, warning_tabs_open, max_tabs_open) VALUES (?, ?, ?)',
+            [result.lastID, 20, 50]
         );
 
         res.status(201).json({ 
@@ -231,7 +231,7 @@ router.get('/profile', requireAuth, async (req, res) => {
         // Get user config
         const config = await dbGet(
             db,
-            'SELECT max_tabs_open FROM user_config WHERE user_id = ?',
+            'SELECT warning_tabs_open, max_tabs_open FROM user_config WHERE user_id = ?',
             [userId]
         );
         
@@ -242,7 +242,8 @@ router.get('/profile', requireAuth, async (req, res) => {
                 email: user.email
             },
             config: {
-                max_tabs_open: config ? config.max_tabs_open : 20
+                warning_tabs_open: config ? (config.warning_tabs_open ?? 20) : 20,
+                max_tabs_open: config ? (config.max_tabs_open ?? 50) : 50
             }
         });
     } catch (error) {
@@ -297,28 +298,43 @@ router.put('/profile', requireAuth, async (req, res) => {
 
 /**
  * PUT /api/user/config
- * Update user config (max_tabs_open)
+ * Update user config (warning_tabs_open, max_tabs_open)
  */
 router.put('/config', requireAuth, async (req, res) => {
     const db = await getDatabase();
     try {
         const userId = req.userId;
-        const { max_tabs_open } = req.body;
+        const { warning_tabs_open, max_tabs_open } = req.body;
         
-        // Validate max_tabs_open
+        // Validate warning_tabs_open (must be > 0)
+        const warningTabs = parseInt(warning_tabs_open, 10);
+        if (isNaN(warningTabs) || warningTabs < 1 || warningTabs > 1000) {
+            return res.status(400).json({ error: 'warning_tabs_open must be between 1 and 1000' });
+        }
+        
+        // Validate max_tabs_open (0 = no limit, otherwise must be >= warning_tabs_open)
         const maxTabs = parseInt(max_tabs_open, 10);
-        if (isNaN(maxTabs) || maxTabs < 1 || maxTabs > 1000) {
-            return res.status(400).json({ error: 'max_tabs_open must be between 1 and 1000' });
+        if (isNaN(maxTabs) || maxTabs < 0 || maxTabs > 1000) {
+            return res.status(400).json({ error: 'max_tabs_open must be between 0 and 1000 (0 = no limit)' });
+        }
+        
+        // Warning cannot be above MAX unless MAX = 0 (no limit)
+        if (maxTabs > 0 && warningTabs > maxTabs) {
+            return res.status(400).json({ error: 'warning_tabs_open cannot be above max_tabs_open (unless max_tabs_open is 0 for no limit)' });
         }
         
         // Update or insert config
         await dbRun(
             db,
-            'INSERT OR REPLACE INTO user_config (user_id, max_tabs_open, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
-            [userId, maxTabs]
+            'INSERT OR REPLACE INTO user_config (user_id, warning_tabs_open, max_tabs_open, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+            [userId, warningTabs, maxTabs]
         );
         
-        res.json({ message: 'Config updated successfully', max_tabs_open: maxTabs });
+        res.json({ 
+            message: 'Config updated successfully', 
+            warning_tabs_open: warningTabs,
+            max_tabs_open: maxTabs 
+        });
     } catch (error) {
         console.error('Error updating config:', error);
         res.status(500).json({ error: 'Failed to update config' });

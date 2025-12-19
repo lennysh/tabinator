@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS group_rules (
 -- User config table
 CREATE TABLE IF NOT EXISTS user_config (
     user_id INTEGER PRIMARY KEY,
-    max_tabs_open INTEGER DEFAULT 20,
+    warning_tabs_open INTEGER DEFAULT 20,
+    max_tabs_open INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

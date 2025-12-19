@@ -42,23 +42,108 @@ function initDatabase() {
                     resolve(db);
                     return;
                 }
-                if (cols && cols.length > 0) {
-                    const hasBlockIndex = cols.some(col => col.name === 'block_index');
-                    if (!hasBlockIndex) {
-                        db.run("ALTER TABLE group_rules ADD COLUMN block_index INTEGER NOT NULL DEFAULT 0", (err) => {
+                
+                const checkAndAddColumn = (tableName, columnName, defaultValue, afterColumn) => {
+                    return new Promise((resolveCol, rejectCol) => {
+                        db.all(`PRAGMA table_info(${tableName})`, (err, tableCols) => {
                             if (err) {
-                                console.error('Error adding block_index column:', err);
-                            } else {
-                                console.log('Added block_index column to group_rules table');
+                                console.error(`Error checking ${tableName} columns:`, err);
+                                return resolveCol();
                             }
-                            resolve(db);
+                            if (tableCols && tableCols.length > 0) {
+                                const hasColumn = tableCols.some(col => col.name === columnName);
+                                if (!hasColumn) {
+                                    const alterQuery = defaultValue !== null 
+                                        ? `ALTER TABLE ${tableName} ADD COLUMN ${columnName} INTEGER NOT NULL DEFAULT ${defaultValue}`
+                                        : `ALTER TABLE ${tableName} ADD COLUMN ${columnName} INTEGER DEFAULT ${defaultValue}`;
+                                    db.run(alterQuery, (err) => {
+                                        if (err) {
+                                            console.error(`Error adding ${columnName} column:`, err);
+                                        } else {
+                                            console.log(`Added ${columnName} column to ${tableName} table`);
+                                        }
+                                        resolveCol();
+                                    });
+                                } else {
+                                    resolveCol();
+                                }
+                            } else {
+                                resolveCol();
+                            }
                         });
-                    } else {
-                        resolve(db);
-                    }
-                } else {
-                    resolve(db);
-                }
+                    });
+                };
+                
+                // Check and add block_index if needed
+                checkAndAddColumn('group_rules', 'block_index', 0, null).then(() => {
+                    // Check and add warning_tabs_open if needed
+                    checkAndAddColumn('user_config', 'warning_tabs_open', 20, null).then(() => {
+                        // Migrate existing max_tabs_open values:
+                        // 1. Copy old max_tabs_open to warning_tabs_open
+                        // 2. Set max_tabs_open to 50 (if not already set to something else)
+                        db.all("SELECT user_id, max_tabs_open FROM user_config", (err, rows) => {
+                            if (err) {
+                                console.error('Error checking user_config:', err);
+                                resolve(db);
+                                return;
+                            }
+                            if (rows && rows.length > 0) {
+                                let updateCount = 0;
+                                let processedCount = 0;
+                                rows.forEach(row => {
+                                    // Check current warning_tabs_open value
+                                    db.get("SELECT warning_tabs_open FROM user_config WHERE user_id = ?", [row.user_id], (err, config) => {
+                                        if (err) {
+                                            console.error('Error checking config:', err);
+                                            processedCount++;
+                                            if (processedCount === rows.length) {
+                                                if (updateCount > 0) {
+                                                    console.log(`Migrated ${updateCount} user config records`);
+                                                }
+                                                resolve(db);
+                                            }
+                                            return;
+                                        }
+                                        // If warning_tabs_open is the default (20), migrate old max_tabs_open to it
+                                        // and set max_tabs_open to 50
+                                        if (config && config.warning_tabs_open === 20) {
+                                            const warningValue = row.max_tabs_open || 20;
+                                            const maxValue = 50; // Set max to 50
+                                            db.run("UPDATE user_config SET warning_tabs_open = ?, max_tabs_open = ? WHERE user_id = ?", 
+                                                [warningValue, maxValue, row.user_id], (err) => {
+                                                if (err) {
+                                                    console.error('Error updating user config:', err);
+                                                } else {
+                                                    updateCount++;
+                                                }
+                                                processedCount++;
+                                                if (processedCount === rows.length) {
+                                                    if (updateCount > 0) {
+                                                        console.log(`Migrated ${updateCount} user config records`);
+                                                    }
+                                                    resolve(db);
+                                                }
+                                            });
+                                        } else {
+                                            processedCount++;
+                                            if (processedCount === rows.length) {
+                                                if (updateCount > 0) {
+                                                    console.log(`Migrated ${updateCount} user config records`);
+                                                }
+                                                resolve(db);
+                                            }
+                                        }
+                                    });
+                                });
+                                if (rows.length === 0) {
+                                    resolve(db);
+                                }
+                            } else {
+                                resolve(db);
+                            }
+                        });
+                    });
+                });
             });
         });
     });

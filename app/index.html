@@ -306,9 +306,14 @@
                         </div>
                         
                         <div>
+                            <label for="admin-warning-tabs" class="block text-sm font-medium text-gray-300">Warning Tabs Limit</label>
+                            <input type="number" id="admin-warning-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="mt-1 text-xs text-gray-400">Show warning when opening this many tabs (1-1000)</p>
+                        </div>
+                        <div>
                             <label for="admin-max-tabs" class="block text-sm font-medium text-gray-300">Max Tabs Open Limit</label>
-                            <input type="number" id="admin-max-tabs" min="1" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            <p class="mt-1 text-xs text-gray-400">Safety limit for opening multiple tabs at once (1-1000)</p>
+                            <input type="number" id="admin-max-tabs" min="0" max="1000" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="mt-1 text-xs text-gray-400">Block opening if above this limit. <strong>0 = NO LIMIT</strong> (must be ≥ warning limit or 0)</p>
                         </div>
                         
                         <div id="admin-settings-error" class="hidden text-red-400 text-sm"></div>
@@ -603,7 +608,8 @@
         // Store the parsed data globally
         let linkData = null; // Will hold { config: {}, links: [], groups: [] }
         let currentlyFilteredLinks = [];
-        let maxTabsOpen = 20; // Default safety limit
+        let warningTabsOpen = 20; // Default warning limit
+        let maxTabsOpen = 50; // Default max limit (0 = no limit)
         
         // Store filter states globally
         let allTags = new Set();
@@ -969,7 +975,8 @@
                 
                 document.getElementById('admin-username').value = data.user.username;
                 document.getElementById('admin-email').value = data.user.email || '';
-                document.getElementById('admin-max-tabs').value = data.config.max_tabs_open || 20;
+                document.getElementById('admin-warning-tabs').value = data.config.warning_tabs_open || 20;
+                document.getElementById('admin-max-tabs').value = data.config.max_tabs_open ?? 50;
             } catch (error) {
                 console.error('Error loading profile:', error);
                 errorEl.textContent = 'Failed to load profile settings';
@@ -1020,6 +1027,7 @@
             event.preventDefault();
             
             const email = document.getElementById('admin-email').value.trim();
+            const warningTabs = parseInt(document.getElementById('admin-warning-tabs').value, 10);
             const maxTabs = parseInt(document.getElementById('admin-max-tabs').value, 10);
             const errorEl = document.getElementById('admin-settings-error');
             const successEl = document.getElementById('admin-settings-success');
@@ -1035,8 +1043,21 @@
                 return;
             }
             
-            if (isNaN(maxTabs) || maxTabs < 1 || maxTabs > 1000) {
-                errorEl.textContent = 'Max tabs must be between 1 and 1000';
+            if (isNaN(warningTabs) || warningTabs < 1 || warningTabs > 1000) {
+                errorEl.textContent = 'Warning tabs must be between 1 and 1000';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (isNaN(maxTabs) || maxTabs < 0 || maxTabs > 1000) {
+                errorEl.textContent = 'Max tabs must be between 0 and 1000 (0 = no limit)';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            // Warning cannot be above MAX unless MAX = 0 (no limit)
+            if (maxTabs > 0 && warningTabs > maxTabs) {
+                errorEl.textContent = 'Warning tabs cannot be above max tabs (unless max is 0 for no limit)';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -1063,7 +1084,10 @@
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ max_tabs_open: maxTabs })
+                    body: JSON.stringify({ 
+                        warning_tabs_open: warningTabs,
+                        max_tabs_open: maxTabs 
+                    })
                 });
                 
                 if (!configResponse.ok) {
@@ -1776,11 +1800,12 @@
                 }
                 
                 // --- NEW: Read config section ---
-                if (linkData.config && linkData.config.max_tabs_open) {
-                    maxTabsOpen = parseInt(linkData.config.max_tabs_open, 10) || 20;
-                    console.log(`Max tabs open limit set to: ${maxTabsOpen}`);
+                if (linkData.config) {
+                    warningTabsOpen = parseInt(linkData.config.warning_tabs_open, 10) || 20;
+                    maxTabsOpen = parseInt(linkData.config.max_tabs_open, 10) ?? 50;
+                    console.log(`Tab limits set - Warning: ${warningTabsOpen}, Max: ${maxTabsOpen === 0 ? 'No limit' : maxTabsOpen}`);
                 } else {
-                    console.warn(`No 'config.max_tabs_open' found in links.yaml. Defaulting to ${maxTabsOpen}.`);
+                    console.warn(`No 'config' found. Defaulting to warning: ${warningTabsOpen}, max: ${maxTabsOpen === 0 ? 'No limit' : maxTabsOpen}.`);
                 }
                 // --- End new section ---
 
@@ -2237,9 +2262,17 @@
             openAllBtn.textContent = `Open All Filtered Links (${linkCount})`;
             openAllBtn.disabled = linkCount === 0;
 
-            // --- NEW: Show warning if filtered count is over the limit ---
-            if (linkCount > maxTabsOpen) {
-                tabLimitMessageEl.textContent = `The current filter matches ${linkCount} tabs, which is over your safety limit of ${maxTabsOpen}. The "Open All" button will ask for confirmation.`;
+            // --- NEW: Show warning if filtered count is over the warning limit ---
+            if (linkCount > warningTabsOpen) {
+                let message = `The current filter matches ${linkCount} tabs, which is over your warning limit of ${warningTabsOpen}.`;
+                if (maxTabsOpen > 0 && linkCount > maxTabsOpen) {
+                    message += ` Opening is blocked (max limit: ${maxTabsOpen}).`;
+                    openAllBtn.disabled = true;
+                } else {
+                    message += ` The "Open All" button will ask for confirmation.`;
+                    openAllBtn.disabled = false;
+                }
+                tabLimitMessageEl.textContent = message;
                 tabLimitWarningEl.classList.remove('hidden');
                 openAllBtn.classList.add('btn-red'); // Make button red as a warning
                 openAllBtn.classList.remove('btn-blue');
@@ -2247,6 +2280,7 @@
                 tabLimitWarningEl.classList.add('hidden');
                 openAllBtn.classList.remove('btn-red');
                 openAllBtn.classList.add('btn-blue');
+                openAllBtn.disabled = false;
             }
             // --- End new section ---
 
@@ -2410,9 +2444,16 @@
                 return;
             }
             
-            // --- NEW: Check against maxTabsOpen limit ---
-            if (linkCount > maxTabsOpen) {
-                const confirmationMessage = `This will attempt to open <strong>${linkCount} tabs</strong>, which is more than your safety limit of ${maxTabsOpen}.<br><br>Are you sure you want to continue?`;
+            // --- NEW: Check against maxTabsOpen limit (block if exceeded) ---
+            if (maxTabsOpen > 0 && linkCount > maxTabsOpen) {
+                alert(`Cannot open ${linkCount} tabs. Maximum allowed is ${maxTabsOpen} tabs.`);
+                console.log('Opening blocked: exceeds max limit');
+                return; // Block opening
+            }
+            
+            // --- Check against warningTabsOpen limit (show confirmation) ---
+            if (linkCount > warningTabsOpen) {
+                const confirmationMessage = `This will attempt to open <strong>${linkCount} tabs</strong>, which is more than your warning limit of ${warningTabsOpen}.<br><br>Are you sure you want to continue?`;
                 
                 const confirmed = await showConfirmation(
                     'Too Many Tabs', 
