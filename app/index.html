@@ -2263,20 +2263,22 @@
             openAllBtn.disabled = linkCount === 0;
 
             // --- NEW: Show warning if filtered count is over the warning limit ---
-            if (linkCount > warningTabsOpen) {
-                let message = `The current filter matches ${linkCount} tabs, which is over your warning limit of ${warningTabsOpen}.`;
-                if (maxTabsOpen > 0 && linkCount > maxTabsOpen) {
-                    message += ` Opening is blocked (max limit: ${maxTabsOpen}).`;
-                    openAllBtn.disabled = true;
-                } else {
-                    message += ` The "Open All" button will ask for confirmation.`;
-                    openAllBtn.disabled = false;
-                }
-                tabLimitMessageEl.textContent = message;
+            if (maxTabsOpen > 0 && linkCount > maxTabsOpen) {
+                // Over MAX limit - show blocking message only
+                tabLimitMessageEl.textContent = `The current filter matches ${linkCount} tabs, which exceeds your maximum limit of ${maxTabsOpen}. Opening is blocked.`;
                 tabLimitWarningEl.classList.remove('hidden');
                 openAllBtn.classList.add('btn-red'); // Make button red as a warning
                 openAllBtn.classList.remove('btn-blue');
+                openAllBtn.disabled = true;
+            } else if (linkCount > warningTabsOpen) {
+                // Over WARNING limit but under MAX (or MAX = 0) - show warning message
+                tabLimitMessageEl.textContent = `The current filter matches ${linkCount} tabs, which is over your warning limit of ${warningTabsOpen}. The "Open All" button will ask for confirmation.`;
+                tabLimitWarningEl.classList.remove('hidden');
+                openAllBtn.classList.add('btn-red'); // Make button red as a warning
+                openAllBtn.classList.remove('btn-blue');
+                openAllBtn.disabled = false;
             } else {
+                // Under warning limit - no warning
                 tabLimitWarningEl.classList.add('hidden');
                 openAllBtn.classList.remove('btn-red');
                 openAllBtn.classList.add('btn-blue');
@@ -2451,7 +2453,7 @@
                 return; // Block opening
             }
             
-            // --- Check against warningTabsOpen limit (show confirmation) ---
+            // --- Check against warningTabsOpen limit (show confirmation only if over warning but under max) ---
             if (linkCount > warningTabsOpen) {
                 const confirmationMessage = `This will attempt to open <strong>${linkCount} tabs</strong>, which is more than your warning limit of ${warningTabsOpen}.<br><br>Are you sure you want to continue?`;
                 
